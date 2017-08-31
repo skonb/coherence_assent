@@ -2,59 +2,98 @@ defmodule CoherenceOauth2.AuthControllerTest do
   use CoherenceOauth2.Test.ConnCase
 
   import CoherenceOauth2.Test.Fixture
+  import OAuth2.TestHelpers
 
-  @index_params %{provider: "github"}
-  @callback_params %{provider: "github", uid: "test"}
+  @provider "test_provider"
+  @callback_params %{code: "test"}
 
   setup %{conn: conn} do
+    server = Bypass.open
+
+    Application.put_env(:coherence_oauth2, :test_provider,
+                        strategy: OAuth2.Strategy.AuthCode,
+                        client_id: "client_id",
+                        client_secret: "abc123",
+                        site: bypass_server(server),
+                        redirect_uri: "#{bypass_server(server)}/auth/callback",
+                        user_uri: "#{bypass_server(server)}/api/user")
+
     user = fixture(:user)
-    {:ok, conn: conn, user: user}
+    {:ok, conn: conn, user: user, server: server}
   end
 
-  test "index/2 redirects to authorization url", %{conn: conn} do
-    conn = get conn, auth_path(conn, :index, @index_params)
+  test "index/2 redirects to authorization url", %{conn: conn, server: server} do
+    conn = get conn, coherence_oauth2_auth_path(conn, :index, @provider)
 
-    assert redirected_to(conn) == "https://example.com?error=unsupported_response_type&error_description=The+authorization+server+does+not+support+this+response+type."
+    assert redirected_to(conn) == "http://localhost:#{server.port}/oauth/authorize?client_id=client_id&redirect_uri=http%3A%2F%2Flocalhost%3A#{server.port}%2Fauth%2Fcallback&response_type=code"
   end
 
-  test "callback/2 with current_user", %{conn: conn, user: user} do
-    conn = conn
-    |> assign conn, :current_user, user
-    |> get conn, auth_path(conn, :callback, @index_params)
+  describe "callback/2" do
+    test "with current_user", %{conn: conn, server: server, user: user} do
+      bypass_oauth(server)
 
-    assert redirected_to(conn) == "https://example.com?error=unsupported_response_type&error_description=The+authorization+server+does+not+support+this+response+type."
-  end
+      conn = conn
+      |> assign(Coherence.Config.assigns_key, user)
+      |> get(coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params))
 
-  test "callback/2 with current_user and identity bound to another user", %{conn: conn, user: user} do
-    diff_user = fixture(:user, email: "anotheruser@example.com")
-    identity = fixture(:user_identity, differ_user)
+      assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
+      assert length(get_user_identities) == 1
+    end
 
-    conn = conn
-    |> assign conn, :current_user, user
-    |> get conn, auth_path(conn, :callback, @callback_params)
+    test "with current_user and identity bound to another user", %{conn: conn, server: server, user: user} do
+      bypass_oauth(server)
+      fixture(:user_identity, user, %{provider: @provider, uid: "1"})
 
-    assert redirected_to(conn) == "https://example.com?error=unsupported_response_type&error_description=The+authorization+server+does+not+support+this+response+type."
-  end
+      conn = conn
+      |> assign(Coherence.Config.assigns_key, user)
+      |> get(coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params))
 
-  test "callback/2 with missing oauth email", %{conn: conn} do
-    conn = get conn, auth_path(conn, :callback, @callback_params)
+      assert redirected_to(conn) == "/registrations/new"
+      assert get_flash(conn, :alert) == "The %{provider} account is already bound to another user."
+    end
 
-    assert redirected_to(conn) == "https://example.com?error=unsupported_response_type&error_description=The+authorization+server+does+not+support+this+response+type."
-    # check not signed in
-  end
+    test "with valid params", %{conn: conn, server: server, user: user} do
+      bypass_oauth(server, %{}, %{email: "newuser@example.com"})
 
-  test "callback/2 with an exesting registered user", %{conn: conn} do
-    conn = get conn, auth_path(conn, :callback, Map.merge(@callback_params, %{email: user.email}))
+      conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
 
-    assert redirected_to(conn) == "https://example.com?error=unsupported_response_type&error_description=The+authorization+server+does+not+support+this+response+type."
-    # check not signed in
-  end
+      assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
+      assert [new_user] = get_user_identities
+      refute new_user.user_id == user.id
+    end
 
-  test "callback/2", %{conn: conn} do
-    conn = get conn, auth_path(conn, :callback, Map.merge(@callback_params, %{email: "diff@example.com"}))
+    test "with missing oauth email", %{conn: conn, server: server, user: user} do
+      bypass_oauth(server)
 
-    assert redirected_to(conn) == "https://example.com?error=unsupported_response_type&error_description=The+authorization+server+does+not+support+this+response+type."
-    # check created user
-    # check signed in
+      conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
+
+      assert redirected_to(conn) == "/auth/test_provider/add_email"
+      assert length(get_user_identities) == 0
+    end
+
+    test "with an existing registered user", %{conn: conn, server: server, user: user} do
+      bypass_oauth(server, %{}, %{email: user.email})
+
+      conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
+
+      assert redirected_to(conn) == "/auth/test_provider/add_email"
+      assert length(get_user_identities) == 0
+      assert get_flash(conn, :alert) == "E-mail is used by another user."
+    end
+
+    defp bypass_oauth(server, token_params \\ %{}, user_params \\ %{}) do
+      bypass server, "POST", "/oauth/token", fn conn ->
+        send_resp(conn, 200, Poison.encode!(Map.merge(%{access_token: "access_token"}, token_params)))
+      end
+
+      bypass server, "GET", "/api/user", fn conn ->
+        send_resp(conn, 200, Poison.encode!(Map.merge(%{uid: "1", name: "Dan Schultzer"}, user_params)))
+      end
+    end
+
+    defp get_user_identities do
+      CoherenceOauth2.UserIdentities.UserIdentity
+      |> CoherenceOauth2.repo.all
+    end
   end
 end

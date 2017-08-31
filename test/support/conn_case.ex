@@ -18,7 +18,7 @@ defmodule CoherenceOauth2.Test.ConnCase do
   using do
     quote do
       # Import conveniences for testing with connections
-      use Coherence.ConnTest
+      use Phoenix.ConnTest
       import CoherenceOauth2.Test.ErrorView
       import CoherenceOauth2.Test.Router.Helpers
 

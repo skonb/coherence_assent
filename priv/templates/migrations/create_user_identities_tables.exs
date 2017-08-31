@@ -10,5 +10,6 @@ defmodule <%= inspect mod %> do
       timestamps(updated_at: false)
     end
 
-    create unique_index(:user_identities, [:uid, :provider])
+    create unique_index(:user_identities, [:uid, :provider], name: :user_identities_uid_provider_index)
+  end
 end

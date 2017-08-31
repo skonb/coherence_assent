@@ -1,10 +1,10 @@
-defmodule CoherenceOauth2.UserIdentities.UserIdentities do
+defmodule CoherenceOauth2.UserIdentities.UserIdentity do
   @moduledoc false
 
   use Ecto.Schema
 
-  schema "oauth_access_grants" do
-    belongs_to :user, Coherence.Config.user_schema.__struct__
+  schema "user_identities" do
+    belongs_to :user, Coherence.Config.user_schema
 
     field :provider,     :string,     null: false
     field :uid,          :string,    null: false

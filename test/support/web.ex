@@ -11,8 +11,8 @@ defmodule CoherenceOauth2.Test.CoherenceOauth2.Web do
 
       import CoherenceOauth2.Test.Router.Helpers
 
-      # Add view helpers including routes helpers
-      import CoherenceOauth2.ViewHelpers
+      # # Add view helpers including routes helpers
+      # import CoherenceOauth2.ViewHelpers
     end
   end
   defmacro __using__(which) when is_atom(which) do

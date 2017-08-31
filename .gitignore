@@ -7,3 +7,4 @@ erl_crash.dump
 *.ez
 
 /priv/test/migrations/*
+!/priv/test/migrations/20170827000000_create_coherence_user.exs

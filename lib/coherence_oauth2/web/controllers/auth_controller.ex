@@ -1,32 +1,66 @@
 defmodule CoherenceOauth2.AuthController do
   @moduledoc false
-  use CoherenceOauth2.Web, :controller
+  use Coherence.Web, :controller
 
   import CoherenceOauth2
 
-  alias Coherence.Controller
   alias CoherenceOauth2.Oauth2
   alias CoherenceOauth2.Callback
+  import Plug.Conn, only: [get_session: 2, put_session: 3]
 
   def index(conn, %{"provider" => provider}) do
-    client = Oauth2.get_client!(provider)
-
-    redirect conn, external: authorize_url!(client)
+    redirect conn, external: Oauth2.authorize_url!(provider)
   end
 
   def callback(conn, %{"provider" => provider, "code" => code}) do
-    client = Oauth2.get_client!(provider)
-    token  = Oauth2.get_token!(client, code: code)
-    params = Oauth2.get_user!(client, token)
+    token  = Oauth2.get_token!(provider, code: code)
+    params = Oauth2.get_user!(provider, token).body
 
-    case Callback.handler(conn, Coherence.current_user(conn), provider) do
-      {:error, :bound_to_different_user} -> conn
-                                            |> put_flash(:alert, "The %{provider} account is already bound to another user.")
-                                            |> redirect_to(:session_create)
-      {:error, :missing_email}           -> conn
-                                            |> redirect_to(:registration_add_email, params)
-      {:ok, user}                        -> Controller.login_user(conn, user)
-                                            |> redirect_to(:session_create, params)
-    end
+    Coherence.current_user(conn)
+    |> Callback.handler(provider, params)
+    |> callback_response(conn, provider, params)
+  end
+
+  def add_email(conn, params) do
+    raise get_session(conn, "coherece_oauth2_params")
+    # user_schema = Config.user_schema
+    # cs = Helpers.changeset(:registration, user_schema, user_schema.__struct__)
+    # render(conn, :new, email: "", changeset: cs)
+  end
+
+  defp callback_response({:ok, user}, conn, _provider, _params) do
+    conn
+    |> Coherence.ControllerHelpers.login_user(user)
+    |> redirect_to(:session_create, %{})
+  end
+  defp callback_response({:error, :bound_to_different_user}, conn, _provider, _params) do
+    conn
+    |> put_flash(:alert, "The %{provider} account is already bound to another user.")
+    |> redirect_to_router_path(:registration_path, :new)
+  end
+  defp callback_response({:error, :missing_email}, conn, provider, params) do
+    conn
+    |> put_session("coherence_oauth2_params", params)
+    |> redirect_to_router_path(:coherence_oauth2_auth_path, :add_email, [provider])
+  end
+  defp callback_response({:error, %Ecto.Changeset{errors: [email: {"has already been taken", _}]}}, conn, provider, params) do
+    conn = put_flash(conn, :alert, "E-mail is used by another user.")
+
+    callback_response({:error, :missing_email}, conn, provider, params)
+  end
+  defp callback_response({:error, %Ecto.Changeset{errors: errors}}, conn, _) do
+    raise errors
+  end
+
+  defp registration_new(conn, params) do
+    path =
+      Coherence.Config.router()
+      |> Module.concat(Helpers)
+      |> apply(:registration_path, [conn, :new])
+  end
+
+  defp redirect_to_router_path(conn, path, action, params \\ []) do
+    path = apply(router_helpers(), path, [conn, action] ++ params)
+    redirect(conn, to: path)
   end
 end

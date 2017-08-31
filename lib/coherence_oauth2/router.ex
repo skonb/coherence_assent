@@ -37,14 +37,14 @@ defmodule CoherenceOauth2.Router do
         coherence_oauth2_routes
       end
   """
-  defmacro coherence_oauth2_routes(mode, options \\ %{}) do
+  defmacro coherence_oauth2_routes(options \\ %{}) do
     quote location: :keep do
-      mode = unquote(mode)
       options = Map.merge(%{scope: "auth"}, unquote(Macro.escape(options)))
 
-      scope "/#{options[:scope]}", as: "auth" do
-        get "/:provider", AuthController, :index
-        get "/:provider/callback", AuthController, :callback
+      scope "/#{options[:scope]}", as: "coherence_oauth2" do
+        get "/:provider", CoherenceOauth2.AuthController, :index
+        get "/:provider/callback", CoherenceOauth2.AuthController, :callback
+        get "/:provider/add_email", CoherenceOauth2.AuthController, :add_email
       end
     end
   end

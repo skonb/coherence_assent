@@ -11,6 +11,7 @@ defmodule CoherenceOauth2.Mixfile do
       elixirc_paths: elixirc_paths(Mix.env),
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
+      compilers: [:phoenix] ++ Mix.compilers,
       preferred_cli_env: [credo: :test, ex_doc: :test],
       deps: deps(),
 
@@ -46,7 +47,9 @@ defmodule CoherenceOauth2.Mixfile do
       {:ecto, "~> 2.1"},
 
       # Dev and test dependencies
+      {:postgrex, ">= 0.11.1", only: :test},
       {:credo, "~> 0.7", only: [:dev, :test]},
+      {:bypass, "~> 0.8", only: :test},
       {:ex_doc, "~> 0.14", only: :dev, runtime: false}
     ]
   end

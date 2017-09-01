@@ -1,12 +1,10 @@
 defmodule Mix.Tasks.CoherenceOauth2.Install do
   use Mix.Task
 
-  import CoherenceOauth2.Mix.Utils
-  require Logger
-
   import Macro, only: [camelize: 1]
   import Mix.Generator
   import Mix.Ecto
+  import CoherenceOauth2.Mix.Utils
 
   @shortdoc "Configure the CoherenceOauth2 Package"
 
@@ -96,41 +94,29 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     |> update_user_model_file(user_path)
   end
 
-  defp add_after_in_user_model(content, needle, string) do
+  defp add_after_in_user_model(string, needle, replacement) do
     regex = ~r/^((\s*)#{Regex.escape(needle)})$/m
-    replacement = "\\1\n\r\\2#{string}"
+    regex_replacement = "\\1\n\\2#{replacement}"
 
-    content
-    |> found_match(regex, needle)
-    |> check_if_already_updated(string)
-    |> replace(regex, replacement)
+    replace(string, regex, regex_replacement, needle, replacement)
   end
 
-  defp found_match(content, regex, needle) do
-    if Regex.match?(regex, content) do
-      content
-    else
-      Mix.raise "Cannot find #{needle} in User module"
-    end
-  end
-
-  defp check_if_already_updated(content, needle) do
-    if Regex.match?(~r/#{Regex.escape(needle)}/, content) do
-      Mix.raise "User file has already been updated"
-    else
-      content
-    end
-  end
-
-  defp replace(content, regex, replacement) do
-    Regex.replace(regex, content, replacement)
-  end
-
-  defp replace_in_user_model(content, needle, replacement) do
+  defp replace_in_user_model(string, needle, replacement) do
     regex = ~r/#{Regex.escape(needle)}/
-    content
-    |> found_match(regex, needle)
-    |> replace(regex, replacement)
+
+    replace(string, regex, replacement, needle, replacement)
+  end
+
+  defp replace(string, regex, regex_replacement, needle, replacement) do
+    found_needle = Regex.match?(~r/#{Regex.escape(needle)}/, string)
+    found_replacement = Regex.match?(~r/#{Regex.escape(replacement)}/, string)
+
+    case {found_needle, found_replacement} do
+      {true, false}  -> Regex.replace(regex, string, regex_replacement, global: false)
+      {false, true}  -> string
+      {false, false} -> Mix.raise "Can't find #{needle} and add #{replacement} in user schema file"
+      {true, true}   -> string
+    end
   end
 
   defp update_user_model_file(content, path) do
@@ -241,10 +227,6 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     [".", :coherence_oauth2]
   end
 
-  defp save_instructions(config, instructions) do
-    update_in config, [:instructions], &(&1 <> instructions)
-  end
-
   ############
   # Migrations
 
@@ -252,7 +234,7 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     path =
      case config[:migration_path] do
        path when is_binary(path) -> path
-       _ -> migrations_path(repo)
+       _                         -> migrations_path(repo)
      end
 
     create_directory path
@@ -350,8 +332,6 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     Enum.reduce opts, {[], []}, fn
       {:default, true}, {acc_bin, acc} ->
         {list_to_atoms(@default_options) ++ acc_bin, acc}
-      {:full, true}, {acc_bin, acc} ->
-        {list_to_atoms(@full_options) ++ acc_bin, acc}
       {name, true}, {acc_bin, acc} when name in @all_options_atoms ->
         {[name | acc_bin], acc}
       {name, false}, {acc_bin, acc} when name in @all_options_atoms ->
@@ -390,7 +370,7 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     end
   end
 
-  defp lib_path(path \\ "") do
+  defp lib_path(path) do
     Path.join ["lib", to_string(Mix.Phoenix.otp_app()), path]
   end
 end

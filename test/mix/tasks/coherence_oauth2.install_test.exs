@@ -53,7 +53,9 @@ defmodule Mix.Tasks.CoherenceOauth2.InstallTest do
       file_path = "lib/coherence_oauth2/coherence/user.ex"
 
       assert_file file_path, fn file ->
+        assert file =~ "use Coherence.Schema"
         assert file =~ "use CoherenceOauth2.Schema"
+        assert file =~ "coherence_schema()"
         assert file =~ "coherence_oauth2_schema()"
         refute file =~ "|> validate_coherence(params)"
         assert file =~ "|> validate_coherence_oauth2(params)"

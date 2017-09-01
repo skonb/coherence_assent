@@ -27,7 +27,7 @@ defmodule CoherenceOauth2.UserIdentities do
   defp get_user_from_identity(nil), do: nil
   defp get_user_from_identity(identity) do
     identity
-    |> CoherenceOAuth2.repo.preload(:user)
+    |> CoherenceOauth2.repo.preload(:user)
     |> apply(:user)
   end
 

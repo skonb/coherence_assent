@@ -15,18 +15,14 @@ defmodule CoherenceOauth2.Oauth2 do
   end
 
   @doc false
-  def get_token!(provider, params \\ [], headers \\ []) do
-    config = get_config!(provider)
-
-    OAuth2.Client.get_token!(client(config), params, headers)
-  end
-
-  @doc false
-  def get_user!(provider, token) do
+  def get_user!(provider, code) do
     config = get_config!(provider)
     user_uri = config[:user_uri] || raise "No :user_uri has been set for provider"
 
-    OAuth2.Client.get!(client(config), user_uri)
+    config
+    |> client
+    |> OAuth2.Client.get_token!(code: code)
+    |> OAuth2.Client.get!(user_uri)
   end
 
   @doc false

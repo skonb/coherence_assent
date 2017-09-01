@@ -11,10 +11,10 @@ defmodule CoherenceOauth2.Callback do
   end
 
   @doc false
-  defp check_current_user({:ok, nil}, provider, _), do: {:ok, nil}
+  defp check_current_user({:ok, nil}, _provider, _params), do: {:ok, nil}
   defp check_current_user({:ok, current_user}, provider, %{"uid" => uid}) do
     case UserIdentities.create_identity(current_user, provider, uid) do
-      {:ok, user_identity}                   -> {:ok, current_user}
+      {:ok, _user_identity}                  -> {:ok, current_user}
       {:error, %{errors: [uid_provider: _]}} -> {:error, :bound_to_different_user}
       {:error, error}                        -> {:error, error}
     end
@@ -31,7 +31,7 @@ defmodule CoherenceOauth2.Callback do
   defp get_or_create_user({:error, _} = error, _, _), do: error
 
   @doc false
-  defp insert_user_with_identity(%{"email" => email} = registration_params, provider, uid) do
+  defp insert_user_with_identity(%{"email" => _email} = registration_params, provider, uid) do
     user_schema = Coherence.Config.user_schema
     registration_params = registration_params
                           |> Map.merge(%{"user_identity_provider" => provider, "user_identity_uid" => uid})

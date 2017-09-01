@@ -15,7 +15,7 @@ defmodule OAuth2.TestHelpers do
     bypass(server, method, path, [], fun)
   end
   def bypass(server, method, path, opts, fun) do
-    {token, opts}   = Keyword.pop(opts, :token, nil)
+    {token, _opts}   = Keyword.pop(opts, :token, nil)
 
     Bypass.expect_once server, method, path, fn conn ->
       conn = parse_req_body(conn)

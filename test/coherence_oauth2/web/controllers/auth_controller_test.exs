@@ -37,7 +37,7 @@ defmodule CoherenceOauth2.AuthControllerTest do
       |> get(coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params))
 
       assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
-      assert length(get_user_identities) == 1
+      assert length(get_user_identities()) == 1
     end
 
     test "with current_user and identity bound to another user", %{conn: conn, server: server, user: user} do
@@ -58,17 +58,17 @@ defmodule CoherenceOauth2.AuthControllerTest do
       conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
 
       assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
-      assert [new_user] = get_user_identities
+      assert [new_user] = get_user_identities()
       refute new_user.user_id == user.id
     end
 
-    test "with missing oauth email", %{conn: conn, server: server, user: user} do
+    test "with missing oauth email", %{conn: conn, server: server} do
       bypass_oauth(server)
 
       conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
 
       assert redirected_to(conn) == "/auth/test_provider/add_email"
-      assert length(get_user_identities) == 0
+      assert length(get_user_identities()) == 0
     end
 
     test "with an existing registered user", %{conn: conn, server: server, user: user} do
@@ -77,7 +77,7 @@ defmodule CoherenceOauth2.AuthControllerTest do
       conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
 
       assert redirected_to(conn) == "/auth/test_provider/add_email"
-      assert length(get_user_identities) == 0
+      assert length(get_user_identities()) == 0
       assert get_flash(conn, :alert) == "E-mail is used by another user."
     end
 

@@ -2,19 +2,16 @@ defmodule CoherenceOauth2.AuthController do
   @moduledoc false
   use Coherence.Web, :controller
 
-  import CoherenceOauth2
-
   alias CoherenceOauth2.Oauth2
   alias CoherenceOauth2.Callback
-  import Plug.Conn, only: [get_session: 2, put_session: 3]
+  import Plug.Conn, only: [put_session: 3]
 
   def index(conn, %{"provider" => provider}) do
     redirect conn, external: Oauth2.authorize_url!(provider)
   end
 
   def callback(conn, %{"provider" => provider, "code" => code}) do
-    token  = Oauth2.get_token!(provider, code: code)
-    params = Oauth2.get_user!(provider, token).body
+    params = Oauth2.get_user!(provider, code).body
 
     Coherence.current_user(conn)
     |> Callback.handler(provider, params)
@@ -41,15 +38,8 @@ defmodule CoherenceOauth2.AuthController do
 
     callback_response({:error, :missing_email}, conn, provider, params)
   end
-  defp callback_response({:error, %Ecto.Changeset{errors: errors}}, conn, _) do
+  defp callback_response({:error, %Ecto.Changeset{errors: errors}}, conn, _provider, _params) do
     raise errors
-  end
-
-  defp registration_new(conn, params) do
-    path =
-      Coherence.Config.router()
-      |> Module.concat(Helpers)
-      |> apply(:registration_path, [conn, :new])
   end
 
   defp redirect_to_router_path(conn, path, action, params \\ []) do

@@ -20,8 +20,6 @@ defmodule CoherenceOauth2.Router do
       end
   """
 
-  alias CoherenceOauth2.Oauth2Controller
-
   defmacro __using__(_opts \\ []) do
     quote do
       import unquote(__MODULE__)

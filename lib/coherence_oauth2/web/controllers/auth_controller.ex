@@ -21,13 +21,6 @@ defmodule CoherenceOauth2.AuthController do
     |> callback_response(conn, provider, params)
   end
 
-  def add_email(conn, params) do
-    raise get_session(conn, "coherece_oauth2_params")
-    # user_schema = Config.user_schema
-    # cs = Helpers.changeset(:registration, user_schema, user_schema.__struct__)
-    # render(conn, :new, email: "", changeset: cs)
-  end
-
   defp callback_response({:ok, user}, conn, _provider, _params) do
     conn
     |> Coherence.ControllerHelpers.login_user(user)
@@ -41,7 +34,7 @@ defmodule CoherenceOauth2.AuthController do
   defp callback_response({:error, :missing_email}, conn, provider, params) do
     conn
     |> put_session("coherence_oauth2_params", params)
-    |> redirect_to_router_path(:coherence_oauth2_auth_path, :add_email, [provider])
+    |> redirect_to_router_path(:coherence_oauth2_registration_path, :add_email, [provider])
   end
   defp callback_response({:error, %Ecto.Changeset{errors: [email: {"has already been taken", _}]}}, conn, provider, params) do
     conn = put_flash(conn, :alert, "E-mail is used by another user.")

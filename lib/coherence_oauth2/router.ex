@@ -44,7 +44,7 @@ defmodule CoherenceOauth2.Router do
       scope "/#{options[:scope]}", as: "coherence_oauth2" do
         get "/:provider", CoherenceOauth2.AuthController, :index
         get "/:provider/callback", CoherenceOauth2.AuthController, :callback
-        get "/:provider/add_email", CoherenceOauth2.AuthController, :add_email
+        get "/:provider/add_email", CoherenceOauth2.RegistrationController, :add_email
       end
     end
   end

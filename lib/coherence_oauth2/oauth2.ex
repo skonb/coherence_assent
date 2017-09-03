@@ -9,24 +9,37 @@ defmodule CoherenceOauth2.Oauth2 do
 
   @doc false
   def authorize_url!(provider, params \\ []) do
-    config = get_config!(provider)
-
-    OAuth2.Client.authorize_url!(client(config), params)
+    provider
+    |> build_client
+    |> OAuth2.Client.authorize_url!(params)
   end
 
   @doc false
   def get_user!(provider, code) do
-    config = get_config!(provider)
-    user_uri = config[:user_uri] || raise "No :user_uri has been set for provider"
-
-    config
-    |> client
+    provider
+    |> build_client()
     |> OAuth2.Client.get_token!(code: code)
-    |> OAuth2.Client.get!(user_uri)
+    |> get_user_from_handler!(provider)
+  end
+
+  defp get_handler(config, provider) do
+    config[:handler] || raise "No :handler set for :#{provider} configuration!"
   end
 
   @doc false
-  defp client(config) do
-    OAuth2.Client.new(config)
+  defp build_client(provider) do
+    config = get_config!(provider)
+
+    config
+    |> get_handler(provider)
+    |> apply(:client, [config])
+  end
+
+  defp get_user_from_handler!(client, provider) do
+    config = get_config!(provider)
+
+    config
+    |> get_handler(provider)
+    |> apply(:get_user!, [client])
   end
 end

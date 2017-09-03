@@ -10,13 +10,15 @@ defmodule CoherenceOauth2.AuthControllerTest do
   setup %{conn: conn} do
     server = Bypass.open
 
-    Application.put_env(:coherence_oauth2, :test_provider,
-                        strategy: OAuth2.Strategy.AuthCode,
-                        client_id: "client_id",
-                        client_secret: "abc123",
-                        site: bypass_server(server),
-                        redirect_uri: "#{bypass_server(server)}/auth/callback",
-                        user_uri: "#{bypass_server(server)}/api/user")
+    Application.put_env(:coherence_oauth2, :clients, [
+                          test_provider: [
+                            client_id: "client_id",
+                            client_secret: "abc123",
+                            site: bypass_server(server),
+                            redirect_uri: "#{bypass_server(server)}/auth/callback",
+                            handler: TestProvider
+                          ]
+                        ])
 
     user = fixture(:user)
     {:ok, conn: conn, user: user, server: server}

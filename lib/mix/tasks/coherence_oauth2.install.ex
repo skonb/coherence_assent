@@ -202,10 +202,27 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
   end
   defp migrate_instructions(_), do: ""
 
+  defp config_instructions(_) do
+    """
+    You can configure the OAuth client information the following way:
+
+    config :coherence_oauth2, :clients, [
+      github: [
+        client_id: "REPLACE_WITH_CLIENT_ID",
+        client_secret: "REPLACE_WITH_CLIENT_SECRET",
+        handler: CoherenceOauth2.Github
+      ]
+    ]
+
+    Handlers exists for Facebook, Github, Google and Twitter.
+    """
+  end
+
   defp print_instructions(%{instructions: instructions} = config) do
     Mix.shell.info instructions
     Mix.shell.info router_instructions(config)
     Mix.shell.info migrate_instructions(config)
+    Mix.shell.info config_instructions(config)
 
     config
   end

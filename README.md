@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/danschultzer/coherence_oauth2.svg?branch=master)](https://travis-ci.org/danschultzer/coherence_oauth2)
 
-Use google, github, twitter, facebook or any other OAuth 2 provider to login with your Coherence supported Phoenix app.
+Use OAuth 2 providers (google, github, twitter, facebook, etc) to login with your Coherence supported Phoenix app.
 
 ## Installation
 
@@ -20,7 +20,7 @@ end
 
 Run `mix deps.get` to install it.
 
-Add migrations and set up `config/config.exs`:
+Add migration and set up `config/config.exs`:
 
 ```bash
 mix coherence_oauth2.install
@@ -31,21 +31,60 @@ Set up routes:
 ```elixir
 defmodule MyAppWeb.Router do
   use MyAppWeb, :router
-  use CoherenceOauth2.Router
+  use Coherence.Router
+  use CoherenceOauth2.Router   # Add this
 
   scope "/", MyAppWeb do
-    coherence_oauth2_routes
+    pipe_through [:browser, :public]
+    coherence_routes()
+    coherence_oauth2_routes() # Add this
   end
 
   # ...
 end
 ```
 
-That's it! The following OAuth 2.0 routes will now be available in your app:
+The following OAuth 2.0 routes will now be available in your app:
 
 ```
-auth_provider_path  GET    /auth/:provider         AuthorizationController :new
-callback_auth_provider_path  POST   /oauth/:provider/callback         AuthorizationController :create
+auth_provider_path           GET    /auth/:provider                   AuthorizationController :new
+callback_auth_provider_path  GET    /oauth/:provider/callback         AuthorizationController :create
+add_email_registration_path  GET    /registration/add_email           RegistartionController  :add_email
+```
+
+## Setting up OAuth client
+
+Add the following to `config/config.exs`:
+
+```elixir
+config :coherence_oauth2, :clients,
+       [
+         github: [
+           client_id: "REPLACE_WITH_CLIENT_ID",
+           client_secret: "REPLACE_WITH_CLIENT_SECRET",
+           handler: CoherenceOauth2.Github
+        ]
+      ]
+```
+
+Handlers for Twitter, Facebook, Google and Github are included. You can also add your own. The general structure of the handler looks like the following:
+
+```elixir
+defmodule TestProvider do
+  def client(config) do
+    config
+    %{
+      strategy: OAuth2.Strategy.AuthCode,
+      site: "http://localhost:4000/",
+      authorize_url: "http://localhost:4000/oauth/authorize",
+      token_url: "http://localhost:4000/oauth/access_token"
+    }
+    |> Map.merge(config)
+    |> OAuth2.Client.new()
+  end
+
+  def get_user!(client), do: OAuth2.Client.get!(client, "/api/user")
+end
 ```
 
 ## LICENSE

@@ -11,11 +11,11 @@ defmodule CoherenceOauth2.AuthController do
   end
 
   def callback(conn, %{"provider" => provider, "code" => code}) do
-    params = Oauth2.get_user!(provider, code).body
+    user_params = Oauth2.get_user!(provider, code)
 
     Coherence.current_user(conn)
-    |> Callback.handler(provider, params)
-    |> callback_response(conn, provider, params)
+    |> Callback.handler(provider, user_params)
+    |> callback_response(conn, provider, user_params)
   end
 
   defp callback_response({:ok, user}, conn, _provider, _params) do

@@ -31,6 +31,7 @@ defmodule CoherenceOauth2.Callback do
   defp get_or_create_user({:error, _} = error, _, _), do: error
 
   @doc false
+  defp insert_user_with_identity(%{"email" => nil}, _provider, _uid), do: {:error, :missing_email}
   defp insert_user_with_identity(%{"email" => _email} = registration_params, provider, uid) do
     user_schema = Coherence.Config.user_schema
     registration_params = registration_params
@@ -39,6 +40,7 @@ defmodule CoherenceOauth2.Callback do
     |> Helpers.changeset(user_schema, user_schema.__struct__, registration_params)
     |> Schemas.create
   end
-  defp insert_user_with_identity(_registration_params, _provider, _uid),
-    do: {:error, :missing_email}
+  defp insert_user_with_identity(_registration_params, provider, _uid) do
+    raise "The :#{provider} handler needs to set an email argument"
+  end
 end

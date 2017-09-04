@@ -10,7 +10,20 @@ defmodule TestProvider do
     |> OAuth2.Client.new()
   end
 
-  def get_user!(client) do
-    OAuth2.Client.get!(client, "/api/user").body
+  def authorize_url!(client, params \\ []) do
+    client
+    |> OAuth2.Client.authorize_url!(params)
+  end
+
+  def get_user(client) do
+    OAuth2.Client.get(client, "/api/user")
+  end
+
+  def normalize(map) do
+    %{
+      "uid"      => map["uid"],
+      "name"     => map["name"],
+      "email"    => map["email"]
+    }
   end
 end

@@ -38,7 +38,7 @@ defmodule CoherenceOauth2.AuthController do
 
     callback_response({:error, :missing_email}, conn, provider, params)
   end
-  defp callback_response({:error, %Ecto.Changeset{errors: errors}}, conn, _provider, _params) do
+  defp callback_response({:error, %Ecto.Changeset{errors: errors}}, _conn, _provider, _params) do
     raise errors
   end
 

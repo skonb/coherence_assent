@@ -17,13 +17,16 @@ defmodule TestProvider do
 
   def get_user(client) do
     OAuth2.Client.get(client, "/api/user")
+    |> normalize
   end
 
-  def normalize(map) do
-    %{
+  defp normalize({:ok, %OAuth2.Response{body: map}}) do
+    {:ok, %{
       "uid"      => map["uid"],
       "name"     => map["name"],
       "email"    => map["email"]
-    }
+    }}
   end
+  defp normalize({:error, _} = response), do: response
+
 end

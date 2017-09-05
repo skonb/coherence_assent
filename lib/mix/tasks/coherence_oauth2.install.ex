@@ -77,21 +77,113 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
   # Coherence Update
 
   defp update_coherence_files(%{update_coherence: true} = config) do
+    config
+    |> update_user_model
+    |> update_coherence_view_helpers
+    |> update_coherence_templates
+  end
+  defp update_coherence_files(config), do: config
+
+  defp update_user_model(config) do
     user_path = lib_path("coherence/user.ex")
     case File.lstat(user_path) do
-      {:ok, %{type: :regular}} -> update_user_model(user_path)
+      {:ok, %{type: :regular}} -> update_user_model_file(user_path)
                                   config
       _ -> Mix.raise "Cannot find Coherence user model at #{user_path}"
     end
   end
-  defp update_coherence_files(config), do: config
 
-  defp update_user_model(user_path) do
-    File.read!(user_path)
+  defp update_user_model_file(user_path) do
+    user_path
+    |> File.read!()
     |> add_after_in_user_model("use Coherence.Schema", "use CoherenceOauth2.Schema")
     |> add_after_in_user_model("coherence_schema()", "coherence_oauth2_schema()")
     |> replace_in_user_model("|> validate_coherence(params)", "|> validate_coherence_oauth2(params)")
-    |> update_user_model_file(user_path)
+    |> update_file(user_path)
+  end
+
+  defp update_coherence_view_helpers(config) do
+    helpers_path = web_path("views/coherence/coherence_view_helpers.ex")
+    string = """
+
+               @spec oauth_links(conn):: String.t
+               def oauth_links(conn) do
+                 CoherenceOauth2.clients()
+                 |> Keyword.keys()
+                 |> Enum.map(fn(provider) -> oauth_link(conn, provider) end)
+               end
+
+               @spec oauth_link(conn, String.t | atom) :: String.t
+               def oauth_link(conn, provider) do
+                 "coherence"
+                 |> dgettext("Login with %{provider}", provider: provider)
+                 |> link(to: @helpers.coherence_oauth2_auth_path(conn, :index, provider))
+               end
+             """
+
+    case File.lstat(helpers_path) do
+      {:ok, %{type: :regular}} ->
+        update_coherence_view_helpers_file(helpers_path, string, ~r/(def oauth\_link)/)
+        config
+      _ ->
+          config
+          |> Map.merge(%{
+            instructions:
+          """
+          #{config.instructions}
+
+          Could not find #{helpers_path}.
+
+          Add the following to your view helpers:
+
+          #{string}
+          """
+          })
+    end
+  end
+
+  defp update_coherence_view_helpers_file(helpers_path, string, regex_needle) do
+    helpers_path
+    |> File.read!()
+    |> add_to_end_in_module(string, regex_needle)
+    |> update_file(helpers_path)
+  end
+
+  defp update_coherence_templates(config) do
+    session_template = web_path("templates/coherence/session/new.html.eex")
+    registration_template = web_path("templates/coherence/registration/new.html.eex")
+    string = "<%= oauth_links(@conn) %>"
+
+    case {File.lstat(registration_template), File.lstat(session_template)} do
+      {{:ok, %{type: :regular}}, {:ok, %{type: :regular}}} ->
+        update_coherence_templates(registration_template, string)
+        update_coherence_templates(session_template, string)
+        config
+      _ ->
+          config
+          |> Map.merge(%{
+            instructions:
+          """
+          #{config.instructions}
+
+          Could not find the following files:
+          #{session_template}
+          #{registration_template}
+
+          Add "#{string}" to the login and registration template files.
+          """
+          })
+    end
+  end
+
+  defp update_coherence_templates(path, string) do
+    content = File.read!(path)
+
+    case String.contains?(content, string) do
+      true -> content
+      _    -> content <> "\n" <> string
+    end
+    |> update_file(path)
   end
 
   defp add_after_in_user_model(string, needle, replacement) do
@@ -107,6 +199,15 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     replace(string, regex, replacement, needle, replacement)
   end
 
+  defp add_to_end_in_module(string, insert, regex_needle) do
+    regex = ~r/^defmodule(.*)end$/s
+    regex_replacement = "defmodule\\1#{insert}end"
+    case Regex.match?(regex_needle, string) do
+      true  -> string
+      false -> Regex.replace(regex, string, regex_replacement, global: false)
+    end
+  end
+
   defp replace(string, regex, regex_replacement, needle, replacement) do
     found_needle = Regex.match?(~r/#{Regex.escape(needle)}/, string)
     found_replacement = Regex.match?(~r/#{Regex.escape(replacement)}/, string)
@@ -119,7 +220,7 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     end
   end
 
-  defp update_user_model_file(content, path) do
+  defp update_file(content, path) do
     {:ok, file} = File.open path, [:write]
     IO.binwrite file, content
     File.close file
@@ -248,6 +349,8 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
   # Migrations
 
   defp gen_migration_files(%{boilerplate: true, migrations: true, repo: repo} = config) do
+    ensure_repo(repo, [])
+
     path =
      case config[:migration_path] do
        path when is_binary(path) -> path
@@ -380,11 +483,8 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
 
   defp web_path(path), do: Path.join(get_web_prefix(), path)
   defp get_web_prefix do
-    case :erlang.function_exported(Mix.Phoenix, :web_path, 2) do
-      # Above 1.3.0.rc otp_app is passed as a symbol
-      true -> Mix.Phoenix.otp_app() |> Mix.Phoenix.web_path()
-      _ -> Mix.Phoenix.web_path("")
-    end
+    Mix.Phoenix.otp_app()
+    |> Mix.Phoenix.web_path()
   end
 
   defp lib_path(path) do

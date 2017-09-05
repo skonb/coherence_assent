@@ -51,7 +51,6 @@ defmodule Mix.Tasks.CoherenceOauth2.InstallTest do
       |> Mix.Tasks.CoherenceOauth2.Install.run
 
       file_path = "lib/coherence_oauth2/coherence/user.ex"
-
       assert_file file_path, fn file ->
         assert file =~ "use Coherence.Schema"
         assert file =~ "use CoherenceOauth2.Schema"
@@ -59,6 +58,22 @@ defmodule Mix.Tasks.CoherenceOauth2.InstallTest do
         assert file =~ "coherence_oauth2_schema()"
         refute file =~ "|> validate_coherence(params)"
         assert file =~ "|> validate_coherence_oauth2(params)"
+      end
+
+      file_path = "lib/coherence_oauth2_web/views/coherence/coherence_view_helpers.ex"
+      assert_file file_path, fn file ->
+        assert file =~ "def oauth_links"
+        assert file =~ "def oauth_link"
+      end
+
+      file_path = "lib/coherence_oauth2_web/templates/coherence/registration/new.html.eex"
+      assert_file file_path, fn file ->
+        assert file =~ "<%= oauth_links(@conn) %>"
+      end
+
+      file_path = "lib/coherence_oauth2_web/templates/coherence/session/new.html.eex"
+      assert_file file_path, fn file ->
+        assert file =~ "<%= oauth_links(@conn) %>"
       end
     end
   end

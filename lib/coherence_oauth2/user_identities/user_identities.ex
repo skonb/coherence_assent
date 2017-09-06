@@ -28,7 +28,11 @@ defmodule CoherenceOauth2.UserIdentities do
   defp get_user_from_identity(identity) do
     identity
     |> CoherenceOauth2.repo.preload(:user)
-    |> apply(:user)
+    |> Map.fetch(:user)
+    |> case do
+      {:ok, user} -> user
+      :error       -> nil
+    end
   end
 
   @doc """

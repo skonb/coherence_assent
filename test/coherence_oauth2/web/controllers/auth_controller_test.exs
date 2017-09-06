@@ -31,7 +31,7 @@ defmodule CoherenceOauth2.AuthControllerTest do
   end
 
   describe "callback/2" do
-    test "with current_user", %{conn: conn, server: server, user: user} do
+    test "with current_user session", %{conn: conn, server: server, user: user} do
       bypass_oauth(server)
 
       conn = conn
@@ -42,7 +42,7 @@ defmodule CoherenceOauth2.AuthControllerTest do
       assert length(get_user_identities()) == 1
     end
 
-    test "with current_user and identity bound to another user", %{conn: conn, server: server, user: user} do
+    test "with current_user session and identity bound to another user", %{conn: conn, server: server, user: user} do
       bypass_oauth(server)
       fixture(:user_identity, user, %{provider: @provider, uid: "1"})
 
@@ -71,9 +71,10 @@ defmodule CoherenceOauth2.AuthControllerTest do
 
       assert redirected_to(conn) == "/auth/test_provider/add_email"
       assert length(get_user_identities()) == 0
+      assert Plug.Conn.get_session(conn, "coherence_oauth2_params") == %{"email" => nil, "name" => "Dan Schultzer", "uid" => "1"}
     end
 
-    test "with an existing registered user", %{conn: conn, server: server, user: user} do
+    test "with an existing different registered user email", %{conn: conn, server: server, user: user} do
       bypass_oauth(server, %{}, %{email: user.email})
 
       conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
@@ -81,6 +82,17 @@ defmodule CoherenceOauth2.AuthControllerTest do
       assert redirected_to(conn) == "/auth/test_provider/add_email"
       assert length(get_user_identities()) == 0
       assert get_flash(conn, :alert) == "E-mail is used by another user."
+      assert Plug.Conn.get_session(conn, "coherence_oauth2_params") == %{"email" => "user@example.com", "name" => "Dan Schultzer", "uid" => "1"}
+    end
+
+    test "with valid params and existing user identity", %{conn: conn, server: server, user: user} do
+      bypass_oauth(server, %{}, %{email: user.email})
+
+      fixture(:user_identity, user, %{provider: @provider, uid: "1"})
+
+      conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
+
+      assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
     end
 
     defp bypass_oauth(server, token_params \\ %{}, user_params \\ %{}) do

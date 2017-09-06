@@ -48,11 +48,20 @@ defmodule CoherenceOauth2.Schema do
         |> Ecto.Changeset.put_assoc(:user_identities, [user_identity])
       end
       def validate_coherence_oauth2(changeset, params) do
-        case Coherence.Config.has_option(:authenticatable) do
-           true  -> validate_coherence(changeset, params)
-           false -> changeset
-         end
+        user = changeset.data
+               |> CoherenceOauth2.repo.preload(:user_identities)
+
+        authenticatable_with_identities = Coherence.Config.has_option(:authenticatable) &&
+                                          length(user.user_identities) > 0
+        validate_coherence_oauth2(changeset,
+                                  params,
+                                  authenticatable_with_identities)
       end
+
+      defp validate_coherence_oauth2(%{data: %{password_hash: nil}} = changeset, _params, true),
+        do: changeset
+      defp validate_coherence_oauth2(changeset, params, _authenticatable_with_identities),
+        do: validate_coherence(changeset, params)
     end
   end
 

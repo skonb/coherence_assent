@@ -10,7 +10,7 @@ defmodule CoherenceOauth2.AuthControllerTest do
   setup %{conn: conn} do
     server = Bypass.open
 
-    Application.put_env(:coherence_oauth2, :clients, [
+    Application.put_env(:coherence_oauth2, :providers, [
                           test_provider: [
                             client_id: "client_id",
                             client_secret: "abc123",

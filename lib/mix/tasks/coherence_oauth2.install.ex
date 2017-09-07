@@ -327,7 +327,7 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     """
     You can configure the OAuth client information the following way:
 
-    config :coherence_oauth2, :clients, [
+    config :coherence_oauth2, :providers, [
       github: [
         client_id: "REPLACE_WITH_CLIENT_ID",
         client_secret: "REPLACE_WITH_CLIENT_SECRET",

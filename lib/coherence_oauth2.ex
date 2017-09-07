@@ -14,6 +14,6 @@ defmodule CoherenceOauth2 do
 
   @doc false
   def clients do
-    Application.get_env(:coherence_oauth2, :clients) || raise "CoherenceOauth2 is missing the :clients configration!"
+    Application.get_env(:coherence_oauth2, :providers) || raise "CoherenceOauth2 is missing the :providers configration!"
   end
 end

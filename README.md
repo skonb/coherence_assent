@@ -4,6 +4,13 @@
 
 Use OAuth 2 providers (google, github, twitter, facebook, etc) to login with your Coherence supported Phoenix app.
 
+## Features
+
+* Collects required login field (e.g. email) if missing
+* Multiple providers can be used for accounts
+* Github, Google, Twitter and Facebook handlers included
+* Updates Coherence templates automatically
+
 ## Installation
 
 Add CoherenceOauth2 to your list of dependencies in `mix.exs`:
@@ -12,7 +19,7 @@ Add CoherenceOauth2 to your list of dependencies in `mix.exs`:
 def deps do
   [
     # ...
-    {:coherence_oauth2, "~> 0.1.0"}
+    {:coherence_oauth2, git: "https://github.com/danschultzer/coherence_oauth2.git"}
     # ...
   ]
 end
@@ -20,7 +27,7 @@ end
 
 Run `mix deps.get` to install it.
 
-Add migration and set up `config/config.exs`:
+Run to install coherence_oauth2:
 
 ```bash
 mix coherence_oauth2.install
@@ -47,9 +54,10 @@ end
 The following OAuth 2.0 routes will now be available in your app:
 
 ```
-auth_provider_path                 GET    /auth/:provider            AuthorizationController :new
-callback_auth_provider_path        GET    /auth/:provider/callback   AuthorizationController :create
-add_login_field_registration_path  GET    /auth/:provider/new        RegistartionController  :add_email
+coherence_oauth2_auth_path          GET    /auth/:provider            AuthorizationController :new
+coherence_oauth2_auth_path          GET    /auth/:provider/callback   AuthorizationController :create
+coherence_oauth2_registration_path  GET    /auth/:provider/new        RegistartionController  :add_login_field
+coherence_oauth2_registration_path  GET    /auth/:provider/create     RegistartionController  :create
 ```
 
 ## Setting up OAuth client
@@ -57,7 +65,7 @@ add_login_field_registration_path  GET    /auth/:provider/new        Registartio
 Add the following to `config/config.exs`:
 
 ```elixir
-config :coherence_oauth2, :clients,
+config :coherence_oauth2, :providers,
        [
          github: [
            client_id: "REPLACE_WITH_CLIENT_ID",
@@ -83,7 +91,21 @@ defmodule TestProvider do
     |> OAuth2.Client.new()
   end
 
-  def get_user!(client), do: OAuth2.Client.get!(client, "/api/user")
+  def authorize_url!(client, params \\ []) do
+    params = Keyword.merge(params, [scope: "user"])
+
+    OAuth2.Client.authorize_url!(client, params)
+  end
+
+  def get_user(client, headers \\ [], params \\ []) do
+    client
+    |> OAuth2.Client.get("/user", headers, params)
+    |> normalize(client)
+  end
+
+  def normalize(user) do
+    {:ok, user}
+  end
 end
 ```
 

@@ -34,7 +34,7 @@ defmodule CoherenceOauth2.Oauth2 do
          %{token: %{other_params: %{"error" => error, "error_description" => error_description }}} ->
           raise error_description
          %{token: %{access_token: nil}} ->
-          raise "No access token"
+          raise "No access token."
          %{token: _token} = client ->
           client
        end
@@ -42,7 +42,7 @@ defmodule CoherenceOauth2.Oauth2 do
 
   defp get_config!(provider) do
     case CoherenceOauth2.config(provider) do
-      nil     -> raise "No matching provider configuration available for #{provider}"
+      nil     -> raise "No matching provider configuration available for #{provider}."
       options -> options
     end
   end

@@ -17,7 +17,7 @@
     </div>
   <%% else %>
     <div class="form-group">
-      <%%= required_label f, login_field, class: "control-label" %>
+      <%%= required_label f, humanize(login_field), class: "control-label" %>
       <%%= text_input f, login_field, class: "form-control", required: "" %>
       <%%= error_tag f, login_field %>
     </div>

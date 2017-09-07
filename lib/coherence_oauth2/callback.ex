@@ -45,7 +45,7 @@ defmodule CoherenceOauth2.Callback do
         |> Helpers.changeset(user_schema, user_schema.__struct__, registration_params)
         |> Schemas.create
       _registration_params ->
-        raise "The :#{provider} handler needs to set the #{login_field} param"
+        raise "The :#{provider} handler needs to set the #{login_field} param. Please verify that the handler has been set up correctly."
     end
   end
 end

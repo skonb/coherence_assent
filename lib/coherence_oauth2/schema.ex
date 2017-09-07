@@ -10,8 +10,10 @@ defmodule CoherenceOauth2.Schema do
   ## Examples:
       defmodule MyProject.User do
         use MyProject.Web, :model
+
         use Coherence.Schema
         use CoherenceOauth2.Schema
+
         schema "users" do
           field :name, :string
           field :email, :string
@@ -19,14 +21,17 @@ defmodule CoherenceOauth2.Schema do
           coherence_oauth2_schema
           timestamps
         end
+
         @required_fields ~w(name email)
         @optional_fields ~w() ++ coherence_fields
+
         def changeset(model, params \\ %{}) do
           model
           |> cast(params, @required_fields, @optional_fields)
           |> unique_constraint(:email)
           |> validate_coherence_oauth2(params)
         end
+
         def changeset(model, params, :password) do
           model
           |> cast(params, ~w(password password_confirmation reset_password_token reset_password_sent_at))

@@ -103,7 +103,7 @@ defmodule TestProvider do
     |> normalize(client)
   end
 
-  def normalize(user) do
+  def normalize({:ok, %OAuth2.Response{body: user}}) do
     {:ok, user}
   end
 end

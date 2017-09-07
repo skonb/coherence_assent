@@ -1,4 +1,6 @@
 defmodule CoherenceOauth2.Facebook do
+  alias CoherenceOauth2.StrategyHelpers, as: Helpers
+
   def client(config) do
     [
       site: "https://graph.facebook.com/v2.6",
@@ -24,22 +26,19 @@ defmodule CoherenceOauth2.Facebook do
   end
 
   defp normalize({:ok, %OAuth2.Response{body: user}}, client) do
-    {:ok, %{
-      "uid"      => user["id"],
-      "nickname" => user["username"],
-      "email"    => user["email"],
-      "name"     => user["name"],
-      "first_name" => user["first_name"],
-      "last_name" => user["last_name"],
-      "location" => (user["location"] || %{})["name"],
-      "image"    => image_url(client, user),
-      "descriptin" => user["bio"],
-      "urls"     => %{
-        "Facebook" => user["link"],
-        "Website"   => user["website"]
-      },
-      "verified" => user["verified"]
-    }}
+    {:ok, %{"uid"      => user["id"],
+            "nickname" => user["username"],
+            "email"    => user["email"],
+            "name"     => user["name"],
+            "first_name" => user["first_name"],
+            "last_name" => user["last_name"],
+            "location" => (user["location"] || %{})["name"],
+            "image"    => image_url(client, user),
+            "description" => user["bio"],
+            "urls"     => %{"Facebook" => user["link"],
+                            "Website"   => user["website"]},
+            "verified" => user["verified"]}
+          |> Helpers.prune}
   end
   defp normalize(response, _client), do: response
 

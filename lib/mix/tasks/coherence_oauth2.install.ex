@@ -131,6 +131,7 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
                  CoherenceOauth2.clients()
                  |> Keyword.keys()
                  |> Enum.map(fn(provider) -> oauth_link(conn, provider) end)
+                 |> concat([])
                end
 
                @spec oauth_link(conn, String.t | atom) :: String.t

@@ -1,5 +1,5 @@
 defmodule CoherenceOauth2.Github do
-  use OAuth2.Strategy
+  alias CoherenceOauth2.StrategyHelpers, as: Helpers
 
   def client(config) do
     [
@@ -27,17 +27,14 @@ defmodule CoherenceOauth2.Github do
   defp normalize_with_email({:ok, %OAuth2.Response{body: user}}, client) do
     case OAuth2.Client.get(client, "/user/emails") do
       {:ok, %OAuth2.Response{body: emails}} ->
-        {:ok, %{
-          "uid"      => Integer.to_string(user["id"]),
-          "nickname" => user["login"],
-          "email"    => get_primary_email(emails),
-          "name"     => user["name"],
-          "image"    => user["avatar_url"],
-          "urls"     => %{
-            "GitHub" => user["html_url"],
-            "Blog"   => user["blog"]
-          }
-        }}
+        {:ok, %{"uid"      => Integer.to_string(user["id"]),
+                "nickname" => user["login"],
+                "email"    => get_primary_email(emails),
+                "name"     => user["name"],
+                "image"    => user["avatar_url"],
+                "urls"     => %{"GitHub" => user["html_url"],
+                                "Blog"   => user["blog"]}}
+              |> Helpers.prune}
       {:error, _} = response -> response
     end
   end

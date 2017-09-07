@@ -71,7 +71,7 @@ defmodule CoherenceOauth2.AuthControllerTest do
 
       assert redirected_to(conn) == "/auth/test_provider/new"
       assert length(get_user_identities()) == 0
-      assert Plug.Conn.get_session(conn, "coherence_oauth2_params") == %{"email" => nil, "name" => "Dan Schultzer", "uid" => "1"}
+      assert Plug.Conn.get_session(conn, "coherence_oauth2_params") == %{"name" => "Dan Schultzer", "uid" => "1"}
     end
 
     test "with an existing different registered user email", %{conn: conn, server: server, user: user} do

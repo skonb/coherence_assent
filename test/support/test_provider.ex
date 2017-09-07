@@ -1,4 +1,6 @@
 defmodule TestProvider do
+  alias CoherenceOauth2.StrategyHelpers, as: Helpers
+
   def client(config) do
     [
       strategy: OAuth2.Strategy.AuthCode,
@@ -21,11 +23,10 @@ defmodule TestProvider do
   end
 
   defp normalize({:ok, %OAuth2.Response{body: map}}) do
-    {:ok, %{
-      "uid"      => map["uid"],
-      "name"     => map["name"],
-      "email"    => map["email"]
-    }}
+    {:ok, %{"uid"      => map["uid"],
+            "name"     => map["name"],
+            "email"    => map["email"]}
+          |> Helpers.prune}
   end
   defp normalize({:error, _} = response), do: response
 

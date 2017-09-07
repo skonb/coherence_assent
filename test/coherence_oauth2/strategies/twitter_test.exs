@@ -112,17 +112,13 @@ defmodule CoherenceOauth2.TwitterTest do
         Plug.Conn.resp(conn, 200, Poison.encode!(user))
       end
 
-      expected = %{
-        "descriptin" => "I taught your phone that thing you like.  The Mobile Partner Engineer @Twitter. ",
-        "email" => nil,
-        "image" => "https://si0.twimg.com/profile_images/1751506047/dead_sexy_normal.JPG",
-        "location" => "San Francisco",
-        "name" => "Sean Cook",
-        "nickname" => "theSeanCook",
-        "uid" => "38895958",
-        "urls" => %{"Twitter" => "https://twitter.com/theSeanCook",
-                    "Website" => nil}
-      }
+      expected = %{"description" => "I taught your phone that thing you like.  The Mobile Partner Engineer @Twitter. ",
+                   "image" => "https://si0.twimg.com/profile_images/1751506047/dead_sexy_normal.JPG",
+                   "location" => "San Francisco",
+                   "name" => "Sean Cook",
+                   "nickname" => "theSeanCook",
+                   "uid" => "38895958",
+                   "urls" => %{"Twitter" => "https://twitter.com/theSeanCook"}}
 
       assert {:ok, expected} == CoherenceOauth2.Twitter.get_user(client)
     end

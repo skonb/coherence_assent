@@ -61,17 +61,13 @@ defmodule CoherenceOauth2.GithubTest do
         Plug.Conn.resp(conn, 200, Poison.encode!(emails))
       end
 
-      expected = %{
-        "email" => "octocat@github.com",
-        "image" => "https://github.com/images/error/octocat_happy.gif",
-        "name" => "monalisa octocat",
-        "nickname" => "octocat",
-        "uid" => "1",
-        "urls" => %{
-          "Blog" => "https://github.com/blog",
-          "GitHub" => "https://github.com/octocat"
-        }
-      }
+      expected = %{"email" => "octocat@github.com",
+                   "image" => "https://github.com/images/error/octocat_happy.gif",
+                   "name" => "monalisa octocat",
+                   "nickname" => "octocat",
+                   "uid" => "1",
+                   "urls" => %{"Blog" => "https://github.com/blog",
+                               "GitHub" => "https://github.com/octocat"}}
 
       assert {:ok, expected} == CoherenceOauth2.Github.get_user(client)
     end

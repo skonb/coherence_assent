@@ -1,4 +1,6 @@
 defmodule CoherenceOauth2.Twitter do
+  alias CoherenceOauth2.StrategyHelpers, as: Helpers
+
   def client(config) do
     [
       site: "https://api.twitter.com",
@@ -8,6 +10,9 @@ defmodule CoherenceOauth2.Twitter do
     |> OAuth2.Client.new()
   end
 
+  def authorize_url!(client, params \\ []),
+    do: OAuth2.Client.authorize_url!(client, params)
+
   def get_user(client) do
     client
     |> OAuth2.Client.get("/1.1/account/verify_credentials.json?include_entities=false&skip_status=true&include_email=true")
@@ -15,19 +20,16 @@ defmodule CoherenceOauth2.Twitter do
   end
 
   defp normalize({:ok, %OAuth2.Response{body: user}}) do
-    {:ok, %{
-      "uid"      => Integer.to_string(user["id"]),
-      "nickname" => user["screen_name"],
-      "email"    => user["email"],
-      "location" => user["location"],
-      "name"     => user["name"],
-      "image"    => user["profile_image_url_https"],
-      "descriptin" => user["description"],
-      "urls"     => %{
-        "Website" => user["url"],
-        "Twitter"   => "https://twitter.com/#{user["screen_name"]}"
-      }
-    }}
+    {:ok, %{"uid"      => Integer.to_string(user["id"]),
+            "nickname" => user["screen_name"],
+            "email"    => user["email"],
+            "location" => user["location"],
+            "name"     => user["name"],
+            "image"    => user["profile_image_url_https"],
+            "description" => user["description"],
+            "urls"     => %{"Website" => user["url"],
+                            "Twitter"   => "https://twitter.com/#{user["screen_name"]}"}
+          } |> Helpers.prune}
   end
   defp normalize(response), do: response
 end

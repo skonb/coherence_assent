@@ -14,12 +14,12 @@ defmodule CoherenceOauth2.Controller do
   def callback_response({:error, :bound_to_different_user}, conn, provider, _params) do
     conn
     |> put_flash(:alert, account_already_bound_to_other_user(provider: humanize(provider)))
-    |> redirect_to_router_path(:registration_path, :new)
+    |> redirect(to: get_route(conn, :registration_path, :new))
   end
   def callback_response({:error, :missing_login_field}, conn, provider, params) do
     conn
     |> put_session("coherence_oauth2_params", params)
-    |> redirect_to_router_path(:coherence_oauth2_registration_path, :add_login_field, [provider])
+    |> redirect(to: get_route(conn, :coherence_oauth2_registration_path, :add_login_field, [provider]))
   end
   def callback_response({:error, error}, conn, provider, params) do
     login_field = Coherence.Config.login_field
@@ -33,9 +33,8 @@ defmodule CoherenceOauth2.Controller do
     end
   end
 
-  defp redirect_to_router_path(conn, path, action, params \\ []) do
-    path = apply(router_helpers(), path, [conn, action] ++ params)
-    redirect(conn, to: path)
+  def get_route(conn, path, action, params \\ []) do
+    apply(router_helpers(), path, [conn, action] ++ params)
   end
 
   defp login_field_used_by_other_user(opts),

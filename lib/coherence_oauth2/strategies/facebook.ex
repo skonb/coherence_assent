@@ -5,7 +5,7 @@ defmodule CoherenceOauth2.Facebook do
     [
       site: "https://graph.facebook.com/v2.6",
       authorize_url: "https://www.facebook.com/v2.6/dialog/oauth",
-      token_url: "oauth/access_token"
+      token_url: "/oauth/access_token"
     ]
     |> Keyword.merge(config)
     |> OAuth2.Client.new()

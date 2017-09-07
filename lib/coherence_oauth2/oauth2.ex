@@ -7,8 +7,8 @@ defmodule CoherenceOauth2.Oauth2 do
   end
 
   @doc false
-  def get_user!(provider, code) do
-    client = get_client_with_access_token(provider, code)
+  def get_user!(provider, code, redirect_uri) do
+    client = get_client_with_access_token(provider, code, redirect_uri)
 
     provider
     |> call_handler!(:get_user, [client])
@@ -25,11 +25,11 @@ defmodule CoherenceOauth2.Oauth2 do
     Logger.error("Error: #{inspect reason}")
   end
 
-  defp get_client_with_access_token(provider, code) do
+  defp get_client_with_access_token(provider, code, redirect_uri) do
     client = build_client(provider)
 
     client
-    |> OAuth2.Client.get_token!(code: code, client_secret: client.client_secret)
+    |> OAuth2.Client.get_token!(code: code, client_secret: client.client_secret, redirect_uri: redirect_uri)
     |> case do
          %{token: %{other_params: %{"error" => error, "error_description" => error_description }}} ->
           raise error_description
@@ -54,10 +54,7 @@ defmodule CoherenceOauth2.Oauth2 do
   @doc false
   defp build_client(provider) do
     config = get_config!(provider)
-
-    config
-    |> get_handler(provider)
-    |> apply(:client, [config])
+    call_handler!(provider, :client, [config])
   end
 
   defp call_handler!(provider, method, arguments) do

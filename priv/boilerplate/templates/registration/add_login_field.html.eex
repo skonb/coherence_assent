@@ -9,7 +9,7 @@
     </div>
   <%% end %>
 
-  <%% if login_field == :email do %>
+  <%%= if login_field == :email do %>
     <div class="form-group">
       <%%= required_label f, dgettext("coherence", "Email"), class: "control-label" %>
       <%%= text_input f, :email, class: "form-control", required: "" %>

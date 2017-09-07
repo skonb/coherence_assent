@@ -17,7 +17,8 @@ defmodule CoherenceOauth2.RegistrationController do
            changeset = Coherence.ControllerHelpers.changeset(:registration, user_schema, user_schema.__struct__)
 
            conn
-           |> set_registration_view
+           |> put_view(get_view_module(["Coherence", "RegistrationView"]))
+           |> put_layout({get_view_module(["LayoutView"]), :app})
            |> render(:add_login_field, changeset: changeset, provider: provider)
        end
   end
@@ -56,13 +57,10 @@ defmodule CoherenceOauth2.RegistrationController do
     end
   end
 
-  defp set_registration_view(conn) do
-    module = :coherence
-             |> Application.get_env(:web_module)
-             |> Module.concat(Module.concat(["Coherence", "RegistrationView"]))
-
-    conn
-    |> put_view(module)
+  defp get_view_module(modules) do
+    :coherence
+    |> Application.get_env(:web_module)
+    |> Module.concat(Module.concat(modules))
   end
 
   defp no_session_data_found(),

@@ -27,7 +27,7 @@ defmodule CoherenceOauth2.AuthControllerTest do
   test "index/2 redirects to authorization url", %{conn: conn, server: server} do
     conn = get conn, coherence_oauth2_auth_path(conn, :index, @provider)
 
-    assert redirected_to(conn) == "http://localhost:#{server.port}/oauth/authorize?client_id=client_id&redirect_uri=http%3A%2F%2Flocalhost%3A#{server.port}%2Fauth%2Fcallback&response_type=code"
+    assert redirected_to(conn) == "http://localhost:#{server.port}/oauth/authorize?client_id=client_id&redirect_uri=http%3A%2F%2Flocalhost%2Fauth%2Ftest_provider%2Fcallback&response_type=code"
   end
 
   describe "callback/2" do

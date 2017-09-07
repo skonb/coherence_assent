@@ -1,8 +1,11 @@
 defmodule CoherenceOauth2.CoherenceOauth2View do
-  use CoherenceOauth2.Test.CoherenceOauth2.Web, :view
+  use CoherenceOauth2.Test.Web, :view
 end
 defmodule CoherenceOauth2.LayoutView do
-  use CoherenceOauth2.Test.CoherenceOauth2.Web, :view
+  use CoherenceOauth2.Test.Web, :view
+end
+defmodule CoherenceOauth2.Coherence.RegistrationView do
+  use CoherenceOauth2.Test.Web, :view
 end
 defmodule CoherenceOauth2.Test.ErrorView do
   def render("500.html", _changeset), do: "500.html"

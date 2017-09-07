@@ -23,6 +23,22 @@ defmodule CoherenceOauth2.Test.ConnCase do
       import CoherenceOauth2.Test.Router.Helpers
 
       @endpoint CoherenceOauth2.Test.Endpoint
+
+      def session_conn(conn) do
+        opts =
+          Plug.Session.init(
+            store: :cookie,
+            key: "foobar",
+            encryption_salt: "encrypted cookie salt",
+            signing_salt: "signing salt",
+            log: false,
+            encrypt: false
+          )
+
+        conn
+        |> Plug.Session.call(opts)
+        |> fetch_session()
+      end
     end
   end
 

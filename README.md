@@ -47,9 +47,9 @@ end
 The following OAuth 2.0 routes will now be available in your app:
 
 ```
-auth_provider_path           GET    /auth/:provider                   AuthorizationController :new
-callback_auth_provider_path  GET    /oauth/:provider/callback         AuthorizationController :create
-add_email_registration_path  GET    /registration/add_email           RegistartionController  :add_email
+auth_provider_path                 GET    /auth/:provider            AuthorizationController :new
+callback_auth_provider_path        GET    /auth/:provider/callback   AuthorizationController :create
+add_login_field_registration_path  GET    /auth/:provider/new        RegistartionController  :add_email
 ```
 
 ## Setting up OAuth client

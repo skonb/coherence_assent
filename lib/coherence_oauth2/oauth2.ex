@@ -17,7 +17,6 @@ defmodule CoherenceOauth2.Oauth2 do
 
   defp process_get_user_response({:ok, user}, _provider), do: user
   defp process_get_user_response({:error, %OAuth2.Response{status_code: 401, body: body}}, _provider) do
-    raise body
     raise "Unauthorized token"
     Logger.error("Unauthorized token")
   end
@@ -68,4 +67,6 @@ defmodule CoherenceOauth2.Oauth2 do
     |> get_handler(provider)
     |> apply(method, arguments)
   end
+
+  def dgettext(_domain, msg, _opts \\ %{}), do: msg
 end

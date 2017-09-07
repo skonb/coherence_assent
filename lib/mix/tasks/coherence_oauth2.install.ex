@@ -11,15 +11,20 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
   @moduledoc """
   Configure CoherenceOauth2 for your Phoenix/Coherence application.
   This installer will normally do the following unless given an option not to do so:
-    * Update User model installed by Coherence.
+    * Update User schema installed by Coherence.
+    * Update registration and session templates.
     * Generate appropriate migration files.
     * Generate appropriate template files.
   ## Examples
       mix coherence_oauth2.install
   # ## Option list
-  #   * Your Coherence user model will be modifiedunless the `--no-update-coherence` option is given.
+  #   * Your Coherence user schema and Coherence templates will be modified unless the `--no-update-coherence` option is given.
   #   * A `--config-file config/config.exs` option can be given to change what config file to append to.
   #   * A `--installed-options` option to list the previous install options.
+  #   * A `--silent` option to disable printing instructions
+  #   * A `--web-path="lib/my_project_web"` option can be given to specify the web path
+  #   * A `--migration-path` option to set the migration path
+  #   * A `--module` option to override the module
   # ## Disable Options
   #   * `--no-update-coherence` -- Don't update Coherence user file.
   #   * `--no-migrations` -- Don't create any migration files.
@@ -39,7 +44,7 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
 
   @switches [
     module: :string, installed_options: :boolean,
-    migration_path: :string
+    migration_path: :string, web_path: :string, silent: :boolean
   ] ++ Enum.map(@boolean_options, &({String.to_atom(&1), :boolean}))
 
   @switch_names Enum.map(@switches, &(elem(&1, 0)))
@@ -62,11 +67,26 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
 
   defp do_run(config) do
     config
+    |> validate_project_structure
     |> update_coherence_files
     |> gen_coherence_oauth2_templates
     |> gen_migration_files
     |> print_instructions
   end
+
+  defp validate_project_structure(%{web_path: web_path} = config) do
+    case File.lstat(web_path) do
+      {:ok, %{type: :directory}} ->
+        config
+      _ ->
+        if Mix.shell.yes?("Cannot find web path #{web_path}. Are you sure you want to continue?") do
+          config
+        else
+          Mix.raise "Cannot find web path #{web_path}"
+        end
+    end
+  end
+  defp validate_project_structure(config), do: config
 
   defp validate_option(_, :all), do: true
   defp validate_option(%{opts: opts}, opt) do
@@ -102,8 +122,8 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     |> update_file(user_path)
   end
 
-  defp update_coherence_view_helpers(config) do
-    helpers_path = web_path("views/coherence/coherence_view_helpers.ex")
+  defp update_coherence_view_helpers(%{web_path: web_path} = config) do
+    helpers_path = Path.join(web_path, "views/coherence/coherence_view_helpers.ex")
     string = """
 
                @spec oauth_links(conn):: String.t
@@ -149,9 +169,9 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     |> update_file(helpers_path)
   end
 
-  defp update_coherence_templates(config) do
-    session_template = web_path("templates/coherence/session/new.html.eex")
-    registration_template = web_path("templates/coherence/registration/new.html.eex")
+  defp update_coherence_templates(%{web_path: web_path} = config) do
+    session_template = Path.join(web_path, "templates/coherence/session/new.html.eex")
+    registration_template = Path.join(web_path, "templates/coherence/registration/new.html.eex")
     string = "<%= oauth_links(@conn) %>"
 
     case {File.lstat(registration_template), File.lstat(session_template)} do
@@ -230,25 +250,25 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
   # Templates
 
   @template_files [
-    registration: {:registration, ~w(add_email)}
+    registration: {:registration, ~w(add_login_field)}
   ]
 
-  defp gen_coherence_oauth2_templates(%{templates: true, boilerplate: true, binding: binding} = config) do
+  defp gen_coherence_oauth2_templates(%{templates: true, boilerplate: true, binding: binding, web_path: web_path} = config) do
     for {name, {opt, files}} <- @template_files do
-      if validate_option(config, opt), do: copy_templates(binding, name, files)
+      if validate_option(config, opt), do: copy_templates(binding, name, files, web_path)
     end
     config
   end
   defp gen_coherence_oauth2_templates(config), do: config
 
-  defp copy_templates(binding, name, file_list) do
+  defp copy_templates(binding, name, file_list, web_path) do
     Mix.Phoenix.copy_from paths(),
-      "priv/boilerplate/templates/#{name}", binding, copy_templates_files(name, file_list)
+      "priv/boilerplate/templates/#{name}", binding, copy_templates_files(name, file_list, web_path)
   end
-  defp copy_templates_files(name, file_list) do
+  defp copy_templates_files(name, file_list, web_path) do
     for fname <- file_list do
       fname = "#{fname}.html.eex"
-      {:eex, fname, web_path("templates/coherence_oauth2/#{name}/#{fname}")}
+      {:eex, fname, Path.join(web_path, "templates/coherence/#{name}/#{fname}")}
     end
   end
 
@@ -319,11 +339,12 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     """
   end
 
+  defp print_instructions(%{silent: true} = config), do: config
   defp print_instructions(%{instructions: instructions} = config) do
-    Mix.shell.info instructions
-    Mix.shell.info router_instructions(config)
-    Mix.shell.info migrate_instructions(config)
-    Mix.shell.info config_instructions(config)
+    shell_info instructions, config
+    shell_info router_instructions(config), config
+    shell_info migrate_instructions(config), config
+    shell_info config_instructions(config), config
 
     config
   end
@@ -361,7 +382,7 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     existing_migrations = to_string File.ls!(path)
 
     for {name, template} <- migrations() do
-      create_migration_file(repo, existing_migrations, name, path, template)
+      create_migration_file(repo, existing_migrations, name, path, template, config)
     end
 
     config
@@ -381,11 +402,11 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     end
   end
 
-  defp create_migration_file(repo, existing_migrations, name, path, template) do
+  defp create_migration_file(repo, existing_migrations, name, path, template, config) do
     unless String.match? existing_migrations, ~r/\d{14}_#{name}\.exs/ do
       file = Path.join(path, "#{next_migration_number(existing_migrations)}_#{name}.exs")
       create_file file, EEx.eval_string(template, [mod: Module.concat([repo, Migrations, camelize(name)])])
-      Mix.shell.info "Migration file #{file} has been added."
+      shell_info "Migration file #{file} has been added.", config
     end
   end
 
@@ -418,13 +439,14 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     base = opts[:module] || binding[:base]
     opts = Keyword.put(opts, :base, base)
     repo = Coherence.Config.repo
+    web_path = opts[:web_path] || Mix.Phoenix.web_path(Mix.Phoenix.otp_app())
 
     binding = Keyword.put binding, :base, base
-    binding = Keyword.put binding, :web_prefix, web_path("")
 
     bin_opts
     |> Enum.map(&({&1, true}))
     |> Enum.into(%{})
+    |> Map.put(:web_path, web_path)
     |> Map.put(:instructions, "")
     |> Map.put(:base, base)
     |> Map.put(:opts, bin_opts)
@@ -433,6 +455,7 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     |> Map.put(:installed_options, opts[:installed_options])
     |> Map.put(:repo, repo)
     |> Map.put(:migration_path, opts[:migration_path])
+    |> Map.put(:silent, opts[:silent])
     |> do_default_config(opts)
   end
 
@@ -461,12 +484,18 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     end
   end
 
-  defp print_installed_options(_config) do
+  defp print_installed_options(config) do
     ["mix coherence_oauth2.install"]
     |> list_config_options(Application.get_env(:coherence_oauth2, :opts, []))
     |> Enum.reverse
     |> Enum.join(" ")
-    |> Mix.shell.info
+    |> shell_info(config)
+  end
+
+  defp shell_info(_message, %{silent: true} = config), do: config
+  defp shell_info(message, config) do
+    Mix.shell.info message
+    config
   end
 
   defp list_config_options(acc, opts) do
@@ -479,12 +508,6 @@ defmodule Mix.Tasks.CoherenceOauth2.Install do
     |> Atom.to_string
     |> String.replace("_", "-")
     ["--" <> str | acc]
-  end
-
-  defp web_path(path), do: Path.join(get_web_prefix(), path)
-  defp get_web_prefix do
-    Mix.Phoenix.otp_app()
-    |> Mix.Phoenix.web_path()
   end
 
   defp lib_path(path) do

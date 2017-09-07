@@ -50,7 +50,11 @@ defmodule CoherenceOauth2.Mixfile do
       {:postgrex, ">= 0.11.1", only: :test},
       {:credo, "~> 0.7", only: [:dev, :test]},
       {:bypass, "~> 0.8", only: :test},
-      {:ex_doc, "~> 0.14", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.14", only: :dev, runtime: false},
+
+
+
+      {:phoenix_ecto, "~> 3.2"}
     ]
   end
 

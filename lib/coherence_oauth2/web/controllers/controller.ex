@@ -6,7 +6,13 @@ defmodule CoherenceOauth2.Controller do
   import Phoenix.Naming, only: [humanize: 1]
 
 
-  def callback_response({:ok, user}, conn, _provider, _params) do
+  def callback_response({:ok, :user_created, user}, conn, _provider, _params) do
+    conn
+    |> send_confirmation(user)
+    |> Coherence.ControllerHelpers.login_user(user)
+    |> redirect_to(:registration_create, %{})
+  end
+  def callback_response({:ok, _type, user}, conn, _provider, _params) do
     conn
     |> Coherence.ControllerHelpers.login_user(user)
     |> redirect_to(:session_create, %{})
@@ -35,6 +41,13 @@ defmodule CoherenceOauth2.Controller do
 
   def get_route(conn, path, action, params \\ []) do
     apply(router_helpers(), path, [conn, action] ++ params)
+  end
+
+  defp send_confirmation(conn, user) do
+    case Coherence.Config.user_schema.confirmed?(user) do
+      false -> Coherence.ControllerHelpers.send_confirmation(conn, user, Coherence.Config.user_schema)
+      _     -> conn
+    end
   end
 
   defp login_field_used_by_other_user(opts),

@@ -24,10 +24,10 @@ defmodule CoherenceOauth2.Callback do
   defp get_or_create_user({:ok, nil}, provider, %{"uid" => uid} = params) do
     case UserIdentities.get_user_from_identity_params(provider, uid) do
       nil   -> insert_user_with_identity(params, provider, uid)
-      user  -> {:ok, user}
+      user  -> {:ok, :user_loaded, user}
     end
   end
-  defp get_or_create_user({:ok, current_user}, _, _), do: {:ok, current_user}
+  defp get_or_create_user({:ok, current_user}, _, _), do: {:ok, :identity_created, current_user}
   defp get_or_create_user({:error, _} = error, _, _), do: error
 
   @doc false
@@ -40,12 +40,24 @@ defmodule CoherenceOauth2.Callback do
       %{^login_field => _login_field} ->
         user_schema = Coherence.Config.user_schema
         registration_params = registration_params
-                              |> Map.merge(%{"user_identity_provider" => provider, "user_identity_uid" => uid})
+                              |> Map.merge(%{"user_identity_provider" => provider,
+                                             "user_identity_uid" => uid})
         :registration
         |> Helpers.changeset(user_schema, user_schema.__struct__, registration_params)
         |> Schemas.create
+        |> case do
+            {:ok, user} -> {:ok, :user_created, user}
+            response    -> response
+           end
       _registration_params ->
         {:error, :missing_login_field}
+    end
+  end
+
+  defp send_confirmation(conn, user) do
+    case Coherence.Config.user_schema.confirmed?(user) do
+      false -> Coherence.ControllerHelpers.send_confirmation(conn, user, Coherence.Config.user_schema)
+      _     -> conn
     end
   end
 end

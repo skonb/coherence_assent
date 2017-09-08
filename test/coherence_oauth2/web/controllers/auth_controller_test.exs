@@ -60,8 +60,11 @@ defmodule CoherenceOauth2.AuthControllerTest do
       conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
 
       assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
-      assert [new_user] = get_user_identities()
-      refute new_user.user_id == user.id
+      assert [user_identity] = get_user_identities()
+
+      new_user = CoherenceOauth2.repo.preload(user_identity, :user).user
+      refute new_user.id == user.id
+      assert CoherenceOauth2.Test.User.confirmed?(new_user)
     end
 
     test "with missing oauth email", %{conn: conn, server: server} do

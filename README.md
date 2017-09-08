@@ -6,7 +6,8 @@ Use OAuth 2 providers (google, github, twitter, facebook, etc) to login with you
 
 ## Features
 
-* Collects required login field (e.g. email) if missing
+* Collects required login field if missing from oauth provider
+  * Or if not verified in case of email
 * Multiple providers can be used for accounts
 * Github, Google, Twitter and Facebook handlers included
 * Updates Coherence templates automatically

@@ -49,7 +49,7 @@ defmodule CoherenceOauth2.Schema do
         user_identity = %UserIdentity{provider: provider, uid: uid}
 
         changeset
-        |> Ecto.Changeset.change(%{confirmed_at: Ecto.DateTime.utc, confirmation_token: nil})
+        |> confirm(Map.get(params, "unconfirmed", false))
         |> Ecto.Changeset.put_assoc(:user_identities, [user_identity])
       end
       def validate_coherence_oauth2(changeset, params) do
@@ -62,6 +62,11 @@ defmodule CoherenceOauth2.Schema do
                                   params,
                                   authenticatable_with_identities)
       end
+
+      defp confirm(changeset, false) do
+        Ecto.Changeset.change(changeset, %{confirmed_at: Ecto.DateTime.utc, confirmation_token: nil})
+      end
+      defp confirm(changeset, _), do: changeset
 
       defp validate_coherence_oauth2(%{data: %{password_hash: nil}} = changeset, _params, true),
         do: changeset

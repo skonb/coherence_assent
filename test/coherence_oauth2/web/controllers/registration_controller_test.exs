@@ -25,5 +25,6 @@ defmodule CoherenceOauth2.RegistrationControllerTest do
     assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
     assert [new_user] = CoherenceOauth2.repo.all(CoherenceOauth2.Test.User)
     assert new_user.email == "foo@example.com"
+    refute CoherenceOauth2.Test.User.confirmed?(new_user)
   end
 end

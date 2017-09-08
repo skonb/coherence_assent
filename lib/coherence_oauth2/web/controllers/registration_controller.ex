@@ -34,6 +34,7 @@ defmodule CoherenceOauth2.RegistrationController do
            login_field = Atom.to_string(Coherence.Config.login_field)
 
            user_params = coherence_oauth2_params
+           |> Map.put_new("unconfirmed", true)
            |> Map.put_new(login_field, params[login_field])
 
            conn

@@ -7,7 +7,7 @@ defmodule CoherenceOauth2.RegistrationController do
   alias CoherenceOauth2.Controller
   import CoherenceOauth2.Oauth2, only: [dgettext: 2]
 
-  def add_login_field(conn, %{"provider" => provider} = params) do
+  def add_login_field(conn, %{"provider" => _provider} = params) do
     user_schema = Config.user_schema
     changeset = Coherence.ControllerHelpers.changeset(:registration, user_schema, user_schema.__struct__)
 

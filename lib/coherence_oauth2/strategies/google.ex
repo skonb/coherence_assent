@@ -12,7 +12,7 @@ defmodule CoherenceOauth2.Google do
   end
 
   def authorize_url!(client, params \\ []) do
-    params = Keyword.merge(params, [scope: "email,profile"])
+    params = Keyword.merge(params, [scope: "email profile"])
 
     OAuth2.Client.authorize_url!(client, params)
   end

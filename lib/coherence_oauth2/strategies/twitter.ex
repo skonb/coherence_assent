@@ -4,7 +4,8 @@ defmodule CoherenceOauth2.Twitter do
   def client(config) do
     [
       site: "https://api.twitter.com",
-      authorize_url: "/oauth/authenticate"
+      authorize_url: "/oauth/authenticate",
+      token_url: "/oauth2/token"
     ]
     |> Keyword.merge(config)
     |> OAuth2.Client.new()

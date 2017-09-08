@@ -22,7 +22,6 @@ defmodule CoherenceOauth2.Test.ErrorHelpers do
   """
 
   use Phoenix.HTML
-  alias CoherenceOauth2.Test.Gettext
 
   @doc """
   Generates tag for inlined form input errors.
@@ -36,7 +35,7 @@ defmodule CoherenceOauth2.Test.ErrorHelpers do
   @doc """
   Translates an error message using gettext.
   """
-  def translate_error({msg, opts}), do: msg
+  def translate_error({msg, _opts}), do: msg
 end
 
 

@@ -27,7 +27,7 @@ defmodule CoherenceOauth2.AuthControllerTest do
   test "index/2 redirects to authorization url", %{conn: conn, server: server} do
     conn = get conn, coherence_oauth2_auth_path(conn, :index, @provider)
 
-    assert redirected_to(conn) == "http://localhost:#{server.port}/oauth/authorize?client_id=client_id&redirect_uri=http%3A%2F%2Flocalhost%2Fauth%2Ftest_provider%2Fcallback&response_type=code"
+    assert redirected_to(conn) =~ "http://localhost:#{server.port}/oauth/authorize?client_id=client_id&redirect_uri=http%3A%2F%2Flocalhost%2Fauth%2Ftest_provider%2Fcallback&response_type=code&state="
   end
 
   describe "callback/2" do
@@ -95,6 +95,44 @@ defmodule CoherenceOauth2.AuthControllerTest do
       conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
 
       assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
+    end
+
+    test "with failed token generation", %{conn: conn, server: server} do
+      bypass server, "POST", "/oauth/token", fn conn ->
+        send_resp(conn, 401, Poison.encode!(%{error: "invalid_client"}))
+      end
+
+      assert_raise CoherenceOauth2.RequestError, "invalid_client", fn ->
+        get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
+      end
+    end
+
+    test "with differing state", %{conn: conn} do
+      assert_raise CoherenceOauth2.CallbackCSRFError, fn ->
+        conn
+        |> session_conn()
+        |> Plug.Conn.put_session("coherence_oauth2.state", "1")
+        |> get(coherence_oauth2_auth_path(conn, :callback, @provider, Map.merge(@callback_params, %{"state" => "2"})))
+      end
+    end
+
+    test "with same state", %{conn: conn, server: server} do
+      bypass_oauth(server)
+
+      conn = conn
+      |> session_conn()
+      |> Plug.Conn.put_session("coherence_oauth2.state", "1")
+      |> get(coherence_oauth2_auth_path(conn, :callback, @provider, Map.merge(@callback_params, %{"state" => "1"})))
+
+      assert redirected_to(conn) == "/auth/test_provider/new"
+    end
+
+    test "with timeout", %{conn: conn, server: server} do
+      Bypass.down(server)
+
+      assert_raise OAuth2.Error, "Connection refused", fn ->
+        get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
+      end
     end
 
     defp bypass_oauth(server, token_params \\ %{}, user_params \\ %{}) do

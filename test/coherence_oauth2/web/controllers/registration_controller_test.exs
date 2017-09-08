@@ -2,12 +2,11 @@ defmodule CoherenceOauth2.RegistrationControllerTest do
   use CoherenceOauth2.Test.ConnCase
 
   import CoherenceOauth2.Test.Fixture
-  import OAuth2.TestHelpers
 
   @provider "test_provider"
 
   setup %{conn: conn} do
-    conn =  conn
+    conn = conn
     |> session_conn()
     |> Plug.Conn.put_session(:coherence_oauth2_params, %{"uid" => "1", "name" => "John Doe"})
 

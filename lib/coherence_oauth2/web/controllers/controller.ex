@@ -27,16 +27,15 @@ defmodule CoherenceOauth2.Controller do
     |> put_session("coherence_oauth2_params", user_params)
     |> redirect(to: get_route(conn, :coherence_oauth2_registration_path, :add_login_field, [provider]))
   end
-  def callback_response({:error, errors}, conn, provider, user_params, params) do
+  def callback_response({:error, %Ecto.Changeset{} = changeset}, conn, _provider, user_params, params) do
     login_field = Coherence.Config.login_field
 
-    case errors do
+    case changeset do
       %{errors: [{^login_field, _}]} = changeset ->
-        IO.inspect conn.private[:phoenix_controller]
         conn
         |> put_session("coherence_oauth2_params", user_params)
         |> CoherenceOauth2.RegistrationController.add_login_field(params, changeset)
-      %{errors: errors} ->
+      %{errors: _errors} ->
         conn
         |> put_flash(:alert, could_not_sign_in())
         |> redirect(to: get_route(conn, :registration_path, :new))

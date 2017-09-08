@@ -53,11 +53,4 @@ defmodule CoherenceOauth2.Callback do
         {:error, :missing_login_field}
     end
   end
-
-  defp send_confirmation(conn, user) do
-    case Coherence.Config.user_schema.confirmed?(user) do
-      false -> Coherence.ControllerHelpers.send_confirmation(conn, user, Coherence.Config.user_schema)
-      _     -> conn
-    end
-  end
 end

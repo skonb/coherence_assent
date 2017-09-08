@@ -16,4 +16,16 @@ defmodule CoherenceOauth2 do
   def clients do
     Application.get_env(:coherence_oauth2, :providers) || raise "CoherenceOauth2 is missing the :providers configuration!"
   end
+
+  defmodule CallbackError do
+    defexception [:message, :error, :error_uri]
+  end
+
+  defmodule CallbackCSRFError do
+    defexception message: "CSRF detected"
+  end
+
+  defmodule RequestError do
+    defexception [:message, :error]
+  end
 end

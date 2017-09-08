@@ -51,10 +51,7 @@ defmodule CoherenceOauth2.Mixfile do
       {:credo, "~> 0.7", only: [:dev, :test]},
       {:bypass, "~> 0.8", only: :test},
       {:ex_doc, "~> 0.14", only: :dev, runtime: false},
-
-
-
-      {:phoenix_ecto, "~> 3.2"}
+      {:phoenix_ecto, "~> 3.2", only: :test}
     ]
   end
 

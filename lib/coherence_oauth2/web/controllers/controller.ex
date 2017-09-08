@@ -6,36 +6,40 @@ defmodule CoherenceOauth2.Controller do
   import Phoenix.Naming, only: [humanize: 1]
 
 
-  def callback_response({:ok, :user_created, user}, conn, _provider, _params) do
+  def callback_response({:ok, :user_created, user}, conn, _provider, _user_params, _params) do
     conn
     |> send_confirmation(user)
     |> Coherence.ControllerHelpers.login_user(user)
     |> redirect_to(:registration_create, %{})
   end
-  def callback_response({:ok, _type, user}, conn, _provider, _params) do
+  def callback_response({:ok, _type, user}, conn, _provider, _user_params, _params) do
     conn
     |> Coherence.ControllerHelpers.login_user(user)
     |> redirect_to(:session_create, %{})
   end
-  def callback_response({:error, :bound_to_different_user}, conn, provider, _params) do
+  def callback_response({:error, :bound_to_different_user}, conn, provider, _user_params, _params) do
     conn
     |> put_flash(:alert, account_already_bound_to_other_user(provider: humanize(provider)))
     |> redirect(to: get_route(conn, :registration_path, :new))
   end
-  def callback_response({:error, :missing_login_field}, conn, provider, params) do
+  def callback_response({:error, :missing_login_field}, conn, provider, user_params, _params) do
     conn
-    |> put_session("coherence_oauth2_params", params)
+    |> put_session("coherence_oauth2_params", user_params)
     |> redirect(to: get_route(conn, :coherence_oauth2_registration_path, :add_login_field, [provider]))
   end
-  def callback_response({:error, error}, conn, provider, params) do
+  def callback_response({:error, errors}, conn, provider, user_params, params) do
     login_field = Coherence.Config.login_field
 
-    case error do
-      %{errors: [{^login_field, {"has already been taken", _}}]} ->
-        conn = put_flash(conn, :alert, login_field_used_by_other_user(login_field: humanize(login_field)))
-        callback_response({:error, :missing_login_field}, conn, provider, params)
+    case errors do
+      %{errors: [{^login_field, _}]} = changeset ->
+        IO.inspect conn.private[:phoenix_controller]
+        conn
+        |> put_session("coherence_oauth2_params", user_params)
+        |> CoherenceOauth2.RegistrationController.add_login_field(params, changeset)
       %{errors: errors} ->
-        raise errors
+        conn
+        |> put_flash(:alert, could_not_sign_in())
+        |> redirect(to: get_route(conn, :registration_path, :new))
     end
   end
 
@@ -50,9 +54,9 @@ defmodule CoherenceOauth2.Controller do
     end
   end
 
-  defp login_field_used_by_other_user(opts),
-    do: dgettext("coherence_oauth2", "%{login_field} is used by another user.", opts)
-
   defp account_already_bound_to_other_user(opts),
     do: dgettext("coherence_oauth2", "The %{provider} account is already bound to another user.", opts)
+
+  defp could_not_sign_in(),
+    do: dgettext("coherence_oauth2", "Could not sign in. Please try again.", %{})
 end

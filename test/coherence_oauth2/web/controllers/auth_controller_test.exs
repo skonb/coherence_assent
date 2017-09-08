@@ -82,9 +82,8 @@ defmodule CoherenceOauth2.AuthControllerTest do
 
       conn = get conn, coherence_oauth2_auth_path(conn, :callback, @provider, @callback_params)
 
-      assert redirected_to(conn) == "/auth/test_provider/new"
+      assert html_response(conn, 200) =~ "has already been taken"
       assert length(get_user_identities()) == 0
-      assert get_flash(conn, :alert) == "%{login_field} is used by another user."
       assert Plug.Conn.get_session(conn, "coherence_oauth2_params") == %{"email" => "user@example.com", "name" => "Dan Schultzer", "uid" => "1"}
     end
 

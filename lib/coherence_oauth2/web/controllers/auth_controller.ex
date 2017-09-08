@@ -10,12 +10,12 @@ defmodule CoherenceOauth2.AuthController do
     redirect conn, external: Oauth2.authorize_url!(provider, redirect_uri: redirect_uri(conn, provider))
   end
 
-  def callback(conn, %{"provider" => provider, "code" => code}) do
+  def callback(conn, %{"provider" => provider, "code" => code} = params) do
     user_params = Oauth2.get_user!(provider, code, redirect_uri(conn, provider))
 
     Coherence.current_user(conn)
     |> Callback.handler(provider, user_params)
-    |> Controller.callback_response(conn, provider, user_params)
+    |> Controller.callback_response(conn, provider, user_params, params)
   end
 
   defp redirect_uri(conn, provider) do

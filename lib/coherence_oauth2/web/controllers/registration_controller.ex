@@ -7,15 +7,18 @@ defmodule CoherenceOauth2.RegistrationController do
   alias CoherenceOauth2.Controller
   import CoherenceOauth2.Oauth2, only: [dgettext: 2]
 
-  def add_login_field(conn, %{"provider" => provider}) do
+  def add_login_field(conn, %{"provider" => provider} = params) do
+    user_schema = Config.user_schema
+    changeset = Coherence.ControllerHelpers.changeset(:registration, user_schema, user_schema.__struct__)
+
+    add_login_field(conn, params, changeset)
+  end
+  def add_login_field(conn, %{"provider" => provider}, changeset) do
     conn
     |> check_session
     |> case do
          {:error, conn} -> conn
          {:ok, conn, _params} ->
-           user_schema = Config.user_schema
-           changeset = Coherence.ControllerHelpers.changeset(:registration, user_schema, user_schema.__struct__)
-
            conn
            |> put_view(get_view_module(["Coherence", "RegistrationView"]))
            |> put_layout({get_view_module(["LayoutView"]), :app})
@@ -23,24 +26,23 @@ defmodule CoherenceOauth2.RegistrationController do
        end
   end
 
-  def create(conn, %{"provider" => provider} = params) do
+  def create(conn, %{"provider" => provider, "registration" => registration} = params) do
     conn
     |> check_session
     |> case do
          {:error, conn} -> conn
          {:ok, conn, coherence_oauth2_params} ->
-           delete_session(conn, :coherence_oauth2_params)
-
            login_field = Atom.to_string(Coherence.Config.login_field)
 
            user_params = coherence_oauth2_params
-           |> Map.put_new("unconfirmed", true)
-           |> Map.put_new(login_field, params[login_field])
+           |> Map.put("unconfirmed", true)
+           |> Map.put(login_field, Map.get(registration, login_field))
 
            conn
+           |> delete_session("coherence_oauth2_params")
            |> Coherence.current_user()
            |> Callback.handler(provider, user_params)
-           |> Controller.callback_response(conn, provider, user_params)
+           |> Controller.callback_response(conn, provider, user_params, params)
        end
   end
 
@@ -49,8 +51,8 @@ defmodule CoherenceOauth2.RegistrationController do
       nil ->
         conn = conn
         |> put_flash(:alert, no_session_data_found())
-        |> redirect_to(:session_create, %{})
-        #CoherenceOauth2.AuthController.redirect_to_router_path(:registration_path, :new)
+        |> Controller.get_route(:registration_path, :new)
+
         {:error, conn}
 
       session_data ->

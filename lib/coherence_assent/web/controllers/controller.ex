@@ -2,9 +2,27 @@ defmodule CoherenceAssent.Controller do
   use Coherence.Web, :controller
 
   import Plug.Conn, only: [put_session: 3]
-  import CoherenceAssent.Oauth2, only: [dgettext: 3]
+  import CoherenceAssent.Strategies.Oauth2, only: [dgettext: 3]
   import Phoenix.Naming, only: [humanize: 1]
 
+  def get_config!(provider) do
+    config = provider |> CoherenceAssent.config()
+
+    config
+    |> case do
+         nil  -> nil
+         list -> Enum.into(list, %{})
+       end
+    |> case do
+         %{strategy: _} -> config
+         %{}            -> raise "No :strategy set for :#{provider} configuration!"
+         nil            -> raise "No provider configuration available for #{provider}."
+       end
+  end
+
+  def call_strategy!(config, method, arguments) do
+    apply(config[:strategy], method, arguments)
+  end
 
   def callback_response({:ok, :user_created, user}, conn, _provider, _user_params, _params) do
     conn

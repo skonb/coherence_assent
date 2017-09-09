@@ -1,20 +1,25 @@
-defmodule CoherenceAssent.FacebookTest do
-  use CoherenceAssent.TestCase
+defmodule CoherenceAssent.Strategy.FacebookTest do
+  use CoherenceAssent.Test.ConnCase
 
   import OAuth2.TestHelpers
+  alias CoherenceAssent.Strategy.Facebook
 
-  setup do
+  setup %{conn: conn} do
+    conn = session_conn(conn)
+
     bypass = Bypass.open
-    client = CoherenceAssent.Facebook.client(site: bypass_server(bypass),
-                                             token: %OAuth2.AccessToken{
-                                               access_token: "token"
-                                             })
+    config = [site: bypass_server(bypass)]
+    params = %{"code" => "test", "redirect_uri" => "test"}
 
-    {:ok, client: client, bypass: bypass}
+    {:ok, conn: conn, config: config, params: params, bypass: bypass}
   end
 
-  describe "get_user/2" do
-    test "normalizes data", %{client: client, bypass: bypass} do
+  describe "callback/2" do
+    test "normalizes data", %{conn: conn, config: config, params: params, bypass: bypass} do
+      Bypass.expect_once bypass, "POST", "/oauth/access_token", fn conn ->
+        send_resp(conn, 200, Poison.encode!(%{access_token: "access_token"}))
+      end
+
       Bypass.expect_once bypass, "GET", "/me", fn conn ->
         user = %{name: "Dan Schultzer",
                  email: "foo@example.com",
@@ -28,7 +33,10 @@ defmodule CoherenceAssent.FacebookTest do
                    "uid" => "1",
                    "urls" => %{}}
 
-      assert {:ok, expected} == CoherenceAssent.Facebook.get_user(client)
+     {:ok, %{user: user}} = Facebook.callback(conn: conn,
+                                              config: config,
+                                              params: params)
+      assert expected == user
     end
   end
 end

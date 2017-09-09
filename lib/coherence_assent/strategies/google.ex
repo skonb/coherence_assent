@@ -1,40 +1,44 @@
-defmodule CoherenceAssent.Google do
-  alias CoherenceAssent.StrategyHelpers, as: Helpers
+defmodule CoherenceAssent.Strategy.Google do
+  alias CoherenceAssent.Strategy.Helpers
+  alias CoherenceAssent.Strategies.Oauth2, as: Oauth2Helper
 
-  def client(config) do
-    [
-      site: "https://www.googleapis.com/plus/v1",
-      authorize_url: "https://accounts.google.com/o/oauth2/auth",
-      token_url: "https://accounts.google.com/o/oauth2/token"
-    ]
-    |> Keyword.merge(config)
-    |> OAuth2.Client.new()
+  def authorize_url(conn: conn, config: config) do
+    config = config |> set_config
+    Oauth2Helper.authorize_url(conn: conn, config: config)
   end
 
-  def authorize_url!(client, params \\ []) do
-    params = Keyword.merge(params, [scope: "email profile"])
-
-    OAuth2.Client.authorize_url!(client, params)
-  end
-
-  def get_user(client) do
-    client
-    |> OAuth2.Client.get("/people/me/openIdConnect")
+  def callback(conn: conn, config: config, params: params) do
+    config = config |> set_config
+    Oauth2Helper.callback(conn: conn, config: config, params: params)
     |> normalize
   end
 
-  defp normalize({:ok, %OAuth2.Response{body: user}}) do
-    {:ok, %{"uid"        => user["sub"],
-            "name"       => user["name"],
-            "email"      => verified_email(user),
-            "first_name" => user["given_name"],
-            "last_name"  => user["family_name"],
-            "image"      => user["picture"],
-            "domain"     => user["hd"],
-            "urls"       => %{"Google" => user["profile"]}}
-          |> Helpers.prune}
+  defp set_config(config) do
+    [
+      site: "https://www.googleapis.com/plus/v1",
+      authorize_url: "https://accounts.google.com/o/oauth2/auth",
+      token_url: "https://accounts.google.com/o/oauth2/token",
+      user_url: "/people/me/openIdConnect",
+      authorization_params: [scope: "email profile"]
+    ]
+    |> Keyword.merge(config)
+    |> Keyword.put(:strategy, OAuth2.Strategy.AuthCode)
   end
-  defp normalize(response), do: response
+
+  defp normalize({:ok, %{conn: conn, client: client, user: user}}) do
+    user = %{"uid"        => user["sub"],
+             "name"       => user["name"],
+             "email"      => verified_email(user),
+             "first_name" => user["given_name"],
+             "last_name"  => user["family_name"],
+             "image"      => user["picture"],
+             "domain"     => user["hd"],
+             "urls"       => %{"Google" => user["profile"]}}
+           |> Helpers.prune
+
+    {:ok, %{conn: conn, client: client, user: user}}
+  end
+  defp normalize({:error, _} = error), do: error
 
   defp verified_email(%{"email_verified" => "true"} = user), do: user["email"]
   defp verified_email(_), do: nil

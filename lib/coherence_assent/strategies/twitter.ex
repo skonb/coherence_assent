@@ -1,5 +1,5 @@
-defmodule CoherenceAssent.Twitter do
-  alias CoherenceAssent.StrategyHelpers, as: Helpers
+defmodule CoherenceAssent.Strategy.Twitter do
+  alias CoherenceAssent.Strategy.Helpers
 
   def client(config) do
     [

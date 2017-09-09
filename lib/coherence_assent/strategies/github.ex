@@ -1,44 +1,43 @@
-defmodule CoherenceAssent.Github do
-  alias CoherenceAssent.StrategyHelpers, as: Helpers
+defmodule CoherenceAssent.Strategy.Github do
+  alias CoherenceAssent.Strategy.Helpers
+  alias CoherenceAssent.Strategies.Oauth2, as: Oauth2Helper
 
-  def client(config) do
+  def authorize_url(conn: conn, config: config) do
+    config = config |> set_config
+    Oauth2Helper.authorize_url(conn: conn, config: config)
+  end
+
+  def callback(conn: conn, config: config, params: params) do
+    config = config |> set_config
+
+    Oauth2Helper.callback(conn: conn, config: config, params: params)
+    |> get_email
+    |> normalize
+  end
+
+  defp set_config(config) do
     [
-      strategy: OAuth2.Strategy.AuthCode,
       site: "https://api.github.com",
       authorize_url: "https://github.com/login/oauth/authorize",
-      token_url: "https://github.com/login/oauth/access_token"
+      token_url: "https://github.com/login/oauth/access_token",
+      user_url: "/user",
+      authorization_params: ["user,user:email"]
     ]
     |> Keyword.merge(config)
-    |> OAuth2.Client.new()
+    |> Keyword.put(:strategy, OAuth2.Strategy.AuthCode)
   end
 
-  def authorize_url!(client, params \\ []) do
-    params = Keyword.merge(params, [scope: "user,user:email"])
-
-    OAuth2.Client.authorize_url!(client, params)
-  end
-
-  def get_user(client, headers \\ [], params \\ []) do
-    client
-    |> OAuth2.Client.get("/user", headers, params)
-    |> normalize_with_email(client)
-  end
-
-  defp normalize_with_email({:ok, %OAuth2.Response{body: user}}, client) do
+  defp get_email({:ok, %{conn: conn, client: client, user: user}}) do
     case OAuth2.Client.get(client, "/user/emails") do
       {:ok, %OAuth2.Response{body: emails}} ->
-        {:ok, %{"uid"      => Integer.to_string(user["id"]),
-                "nickname" => user["login"],
-                "email"    => get_primary_email(emails),
-                "name"     => user["name"],
-                "image"    => user["avatar_url"],
-                "urls"     => %{"GitHub" => user["html_url"],
-                                "Blog"   => user["blog"]}}
-              |> Helpers.prune}
-      {:error, _} = response -> response
+        user = Map.put(user, "email", get_primary_email(emails))
+        {:ok, %{conn: conn, client: client, user: user}}
+
+      {:error, error} ->
+        {:error, %{conn: conn, error: error}}
     end
   end
-  defp normalize_with_email(response, _client), do: response
+  defp get_email(response), do: response
 
   defp get_primary_email(emails) do
     emails
@@ -49,4 +48,18 @@ defmodule CoherenceAssent.Github do
       :error       -> nil
     end
   end
+
+  defp normalize({:ok, %{conn: conn, client: client, user: user}}) do
+    user = %{"uid"      => Integer.to_string(user["id"]),
+             "nickname" => user["login"],
+             "email"    => user["email"],
+             "name"     => user["name"],
+             "image"    => user["avatar_url"],
+             "urls"     => %{"GitHub" => user["html_url"],
+                             "Blog"   => user["blog"]}}
+           |> Helpers.prune
+
+    {:ok, %{conn: conn, client: client, user: user}}
+  end
+  defp normalize({:error, _} = error), do: error
 end

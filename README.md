@@ -1,21 +1,21 @@
-# CoherenceOauth2
+# CoherenceAssent
 
 [![Build Status](https://travis-ci.org/danschultzer/coherence_assent.svg?branch=master)](https://travis-ci.org/danschultzer/coherence_assent)
 
-Use OAuth providers (google, github, twitter, facebook, etc) to login with your Coherence supported Phoenix app.
+Use Google, Github, Twitter, Facebook, or add your own strategy for authorization to your Coherence Phoenix app.
 
 ## Features
 
-* Collects required login field if missing from oauth provider
+* Collects required login field if missing from provider
   * Or if not verified in case of email
 * Multiple providers can be used for accounts
-* Github, Google, Twitter and Facebook handlers included
+* Github, Google, Twitter and Facebook strategies included
 * Updates Coherence templates automatically
-* Can plug custom strategies
+* Plug in custom strategies
 
 ## Installation
 
-Add CoherenceOauth2 to your list of dependencies in `mix.exs`:
+Add CoherenceAssent to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -41,7 +41,7 @@ Set up routes:
 defmodule MyAppWeb.Router do
   use MyAppWeb, :router
   use Coherence.Router
-  use CoherenceOauth2.Router   # Add this
+  use CoherenceAssent.Router  # Add this
 
   scope "/", MyAppWeb do
     pipe_through [:browser, :public]
@@ -53,16 +53,16 @@ defmodule MyAppWeb.Router do
 end
 ```
 
-The following OAuth 2.0 routes will now be available in your app:
+The following routes will now be available in your app:
 
 ```
-coherence_assent_auth_path          GET    /auth/:provider            AuthorizationController :new
-coherence_assent_auth_path          GET    /auth/:provider/callback   AuthorizationController :create
-coherence_assent_registration_path  GET    /auth/:provider/new        RegistartionController  :add_login_field
-coherence_assent_registration_path  GET    /auth/:provider/create     RegistartionController  :create
+coherence_assent_auth_path          GET    /auth/:provider            CoherenceAssent.AuthorizationController :new
+coherence_assent_auth_path          GET    /auth/:provider/callback   CoherenceAssent.AuthorizationController :create
+coherence_assent_registration_path  GET    /auth/:provider/new        CoherenceAssent.RegistartionController  :add_login_field
+coherence_assent_registration_path  GET    /auth/:provider/create     CoherenceAssent.RegistartionController  :create
 ```
 
-## Setting up OAuth client
+## Setting up a provider
 
 Add the following to `config/config.exs`:
 
@@ -72,12 +72,12 @@ config :coherence_assent, :providers,
          github: [
            client_id: "REPLACE_WITH_CLIENT_ID",
            client_secret: "REPLACE_WITH_CLIENT_SECRET",
-           handler: CoherenceOauth2.Github
+           strategy: CoherenceAssent.Strategy.Github
         ]
       ]
 ```
 
-Handlers for Twitter, Facebook, Google and Github are included. You can also add your own. The general structure of the handler looks like the following:
+Strategy for Twitter, Facebook, Google and Github are included. You can also add your own. The general structure of the strategy looks like the following:
 
 ```elixir
 defmodule TestProvider do

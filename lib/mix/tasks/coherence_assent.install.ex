@@ -332,7 +332,7 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
       github: [
         client_id: "REPLACE_WITH_CLIENT_ID",
         client_secret: "REPLACE_WITH_CLIENT_SECRET",
-        handler: CoherenceAssent.Github
+        strategy: CoherenceAssent.Strategy.Github
       ]
     ]
 

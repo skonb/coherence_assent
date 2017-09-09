@@ -1,33 +1,35 @@
 defmodule TestProvider do
-  alias CoherenceAssent.StrategyHelpers, as: Helpers
+  alias CoherenceAssent.Strategy.Helpers
+  alias CoherenceAssent.Strategies.Oauth2, as: Oauth2Helper
 
-  def client(config) do
-    [
-      strategy: OAuth2.Strategy.AuthCode,
-      site: "http://localhost:4000/",
-      authorize_url: "/oauth/authorize",
-      token_url: "/oauth/token"
-    ]
-    |> Keyword.merge(config)
-    |> OAuth2.Client.new()
+  def authorize_url(conn: conn, config: config) do
+    config = config |> set_config
+    Oauth2Helper.authorize_url(conn: conn, config: config)
   end
 
-  def authorize_url!(client, params \\ []) do
-    client
-    |> OAuth2.Client.authorize_url!(params)
-  end
-
-  def get_user(client) do
-    OAuth2.Client.get(client, "/api/user")
+  def callback(conn: conn, config: config, params: params) do
+    config = config |> set_config
+    Oauth2Helper.callback(conn: conn, config: config, params: params)
     |> normalize
   end
 
-  defp normalize({:ok, %OAuth2.Response{body: map}}) do
-    {:ok, %{"uid"      => map["uid"],
-            "name"     => map["name"],
-            "email"    => map["email"]}
-          |> Helpers.prune}
+  defp set_config(config) do
+    [
+      site: "http://localhost:4000/",
+      authorize_url: "/oauth/authorize",
+      token_url: "/oauth/token",
+      user_url: "/api/user"
+    ]
+    |> Keyword.merge(config)
+    |> Keyword.put(:strategy, OAuth2.Strategy.AuthCode)
+  end
+
+  defp normalize({:ok, %{conn: conn, client: client, user: user}}) do
+    user = %{"uid"      => user["uid"],
+             "name"     => user["name"],
+             "email"    => user["email"]} |> Helpers.prune
+
+    {:ok, %{conn: conn, client: client, user: user}}
   end
   defp normalize({:error, _} = response), do: response
-
 end

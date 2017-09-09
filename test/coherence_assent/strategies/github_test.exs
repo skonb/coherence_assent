@@ -1,18 +1,26 @@
-defmodule CoherenceAssent.GithubTest do
-  use CoherenceAssent.TestCase
+defmodule CoherenceAssent.Strategy.GithubTest do
+  use CoherenceAssent.Test.ConnCase
 
   import OAuth2.TestHelpers
+  alias CoherenceAssent.Strategy.Github
 
-  setup do
+  setup %{conn: conn} do
+    conn = session_conn(conn)
+
     bypass = Bypass.open
+    config = [site: bypass_server(bypass),
+              token_url: "/login/oauth/access_token"]
+    params = %{"code" => "test", "redirect_uri" => "test"}
 
-    client = CoherenceAssent.Github.client(site: bypass_server(bypass))
-
-    {:ok, client: client, bypass: bypass}
+    {:ok, conn: conn, config: config, params: params, bypass: bypass}
   end
 
   describe "get_user/2" do
-    test "normalizes data", %{client: client, bypass: bypass} do
+    test "normalizes data", %{conn: conn, config: config, params: params, bypass: bypass} do
+      Bypass.expect_once bypass, "POST", "/login/oauth/access_token", fn conn ->
+        send_resp(conn, 200, Poison.encode!(%{access_token: "access_token"}))
+      end
+
       Bypass.expect_once bypass, "GET", "/user", fn conn ->
         user = %{
           login: "octocat",
@@ -69,7 +77,10 @@ defmodule CoherenceAssent.GithubTest do
                    "urls" => %{"Blog" => "https://github.com/blog",
                                "GitHub" => "https://github.com/octocat"}}
 
-      assert {:ok, expected} == CoherenceAssent.Github.get_user(client)
+      {:ok, %{user: user}} = Github.callback(conn: conn,
+                                             config: config,
+                                             params: params)
+      assert expected == user
     end
   end
 end

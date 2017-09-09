@@ -1,20 +1,26 @@
 defmodule CoherenceAssent.GoogleTest do
-  use CoherenceAssent.TestCase
+  use CoherenceAssent.Test.ConnCase
 
   import OAuth2.TestHelpers
+  alias CoherenceAssent.Strategy.Google
 
-  setup do
+  setup %{conn: conn} do
+    conn = session_conn(conn)
+
     bypass = Bypass.open
-    client = CoherenceAssent.Google.client(site: bypass_server(bypass),
-                                             token: %OAuth2.AccessToken{
-                                               access_token: "token"
-                                              })
+    config = [site: bypass_server(bypass),
+              token_url: "/o/oauth2/token"]
+    params = %{"code" => "test", "redirect_uri" => "test"}
 
-    {:ok, client: client, bypass: bypass}
+    {:ok, conn: conn, config: config, params: params, bypass: bypass}
   end
 
   describe "get_user/2" do
-    test "normalizes data", %{client: client, bypass: bypass} do
+    test "normalizes data", %{conn: conn, config: config, params: params, bypass: bypass} do
+      Bypass.expect_once bypass, "POST", "/o/oauth2/token", fn conn ->
+        send_resp(conn, 200, Poison.encode!(%{access_token: "access_token"}))
+      end
+
       Bypass.expect_once bypass, "GET", "/people/me/openIdConnect", fn conn ->
         user = %{"kind" => "plus#personOpenIdConnect",
                  "gender" => "",
@@ -40,7 +46,10 @@ defmodule CoherenceAssent.GoogleTest do
                    "uid" => "1",
                    "urls" => %{"Google" => "https://example.com/profile"}}
 
-      assert {:ok, expected} == CoherenceAssent.Google.get_user(client)
+      {:ok, %{user: user}} = Google.callback(conn: conn,
+                                             config: config,
+                                             params: params)
+      assert expected == user
     end
   end
 end

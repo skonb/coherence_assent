@@ -1,4 +1,4 @@
-defmodule CoherenceAssent.StrategyHelpers do
+defmodule CoherenceAssent.Strategy.Helpers do
   def prune(map) do
     map
     |> Enum.map(fn {k, v} -> if is_map(v), do: {k, prune(v)}, else: {k, v} end)

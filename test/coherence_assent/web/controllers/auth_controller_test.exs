@@ -5,7 +5,7 @@ defmodule CoherenceAssent.AuthControllerTest do
   import OAuth2.TestHelpers
 
   @provider "test_provider"
-  @callback_params %{code: "test"}
+  @callback_params %{code: "test", redirect_uri: ""}
 
   setup %{conn: conn} do
     server = Bypass.open
@@ -15,8 +15,7 @@ defmodule CoherenceAssent.AuthControllerTest do
                             client_id: "client_id",
                             client_secret: "abc123",
                             site: bypass_server(server),
-                            redirect_uri: "#{bypass_server(server)}/auth/callback",
-                            handler: TestProvider
+                            strategy: TestProvider
                           ]
                         ])
 

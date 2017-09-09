@@ -4,10 +4,10 @@ defmodule CoherenceAssent.Callback do
   alias Coherence.Schemas
 
   @doc false
-  def handler(current_user, provider, params) do
+  def handler(current_user, provider, user) do
     {:ok, current_user}
-    |> check_current_user(provider, params)
-    |> get_or_create_user(provider, params)
+    |> check_current_user(provider, user)
+    |> get_or_create_user(provider, user)
   end
 
   @doc false
@@ -21,9 +21,9 @@ defmodule CoherenceAssent.Callback do
   end
 
   @doc false
-  defp get_or_create_user({:ok, nil}, provider, %{"uid" => uid} = params) do
+  defp get_or_create_user({:ok, nil}, provider, %{"uid" => uid} = user) do
     case UserIdentities.get_user_from_identity_params(provider, uid) do
-      nil   -> insert_user_with_identity(params, provider, uid)
+      nil   -> insert_user_with_identity(user, provider, uid)
       user  -> {:ok, :user_loaded, user}
     end
   end

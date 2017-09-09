@@ -34,8 +34,8 @@ defmodule TestHelpers do
   end
 
   defp install_coherence(web_path) do
-    Mix.Task.run "coh.install", ~w(--full --confirmable --invitable --no-config --no-models --no-views --no-web --no-messages --web-path=#{web_path} --no-controllers --repo=CoherenceOauth2.Test.Repo --silent)
-    Mix.Task.run "coherence_oauth2.install", ~w(--no-update-coherence --web-path=#{web_path} --silent)
+    Mix.Task.run "coh.install", ~w(--full --confirmable --invitable --no-config --no-models --no-views --no-web --no-messages --web-path=#{web_path} --no-controllers --repo=CoherenceAssent.Test.Repo --silent)
+    Mix.Task.run "coherence_assent.install", ~w(--no-update-coherence --web-path=#{web_path} --silent)
   end
 
   defp recompile do
@@ -57,7 +57,7 @@ Logger.configure(level: :info)
 ExUnit.start()
 Application.ensure_all_started(:bypass)
 
-{:ok, _pid} = CoherenceOauth2.Test.Endpoint.start_link
-{:ok, _pid} = CoherenceOauth2.Test.Repo.start_link
+{:ok, _pid} = CoherenceAssent.Test.Endpoint.start_link
+{:ok, _pid} = CoherenceAssent.Test.Repo.start_link
 
-Ecto.Adapters.SQL.Sandbox.mode(CoherenceOauth2.Test.Repo, :manual)
+Ecto.Adapters.SQL.Sandbox.mode(CoherenceAssent.Test.Repo, :manual)

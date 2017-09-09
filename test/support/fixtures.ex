@@ -1,7 +1,7 @@
-defmodule CoherenceOauth2.Test.Fixture do
-  alias CoherenceOauth2.Test.Repo
-  alias CoherenceOauth2.Test.User
-  alias CoherenceOauth2.UserIdentities.UserIdentity
+defmodule CoherenceAssent.Test.Fixture do
+  alias CoherenceAssent.Test.Repo
+  alias CoherenceAssent.Test.User
+  alias CoherenceAssent.UserIdentities.UserIdentity
 
   def fixture(:user, attrs \\ %{}) do
     {:ok, user} = %User{}

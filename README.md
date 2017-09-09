@@ -1,8 +1,8 @@
 # CoherenceOauth2
 
-[![Build Status](https://travis-ci.org/danschultzer/coherence_oauth2.svg?branch=master)](https://travis-ci.org/danschultzer/coherence_oauth2)
+[![Build Status](https://travis-ci.org/danschultzer/coherence_assent.svg?branch=master)](https://travis-ci.org/danschultzer/coherence_assent)
 
-Use OAuth 2 providers (google, github, twitter, facebook, etc) to login with your Coherence supported Phoenix app.
+Use OAuth providers (google, github, twitter, facebook, etc) to login with your Coherence supported Phoenix app.
 
 ## Features
 
@@ -11,6 +11,7 @@ Use OAuth 2 providers (google, github, twitter, facebook, etc) to login with you
 * Multiple providers can be used for accounts
 * Github, Google, Twitter and Facebook handlers included
 * Updates Coherence templates automatically
+* Can plug custom strategies
 
 ## Installation
 
@@ -20,7 +21,7 @@ Add CoherenceOauth2 to your list of dependencies in `mix.exs`:
 def deps do
   [
     # ...
-    {:coherence_oauth2, git: "https://github.com/danschultzer/coherence_oauth2.git"}
+    {:coherence_assent, git: "https://github.com/danschultzer/coherence_assent.git"}
     # ...
   ]
 end
@@ -28,10 +29,10 @@ end
 
 Run `mix deps.get` to install it.
 
-Run to install coherence_oauth2:
+Run to install coherence_assent:
 
 ```bash
-mix coherence_oauth2.install
+mix coherence_assent.install
 ```
 
 Set up routes:
@@ -45,7 +46,7 @@ defmodule MyAppWeb.Router do
   scope "/", MyAppWeb do
     pipe_through [:browser, :public]
     coherence_routes()
-    coherence_oauth2_routes() # Add this
+    coherence_assent_routes() # Add this
   end
 
   # ...
@@ -55,10 +56,10 @@ end
 The following OAuth 2.0 routes will now be available in your app:
 
 ```
-coherence_oauth2_auth_path          GET    /auth/:provider            AuthorizationController :new
-coherence_oauth2_auth_path          GET    /auth/:provider/callback   AuthorizationController :create
-coherence_oauth2_registration_path  GET    /auth/:provider/new        RegistartionController  :add_login_field
-coherence_oauth2_registration_path  GET    /auth/:provider/create     RegistartionController  :create
+coherence_assent_auth_path          GET    /auth/:provider            AuthorizationController :new
+coherence_assent_auth_path          GET    /auth/:provider/callback   AuthorizationController :create
+coherence_assent_registration_path  GET    /auth/:provider/new        RegistartionController  :add_login_field
+coherence_assent_registration_path  GET    /auth/:provider/create     RegistartionController  :create
 ```
 
 ## Setting up OAuth client
@@ -66,7 +67,7 @@ coherence_oauth2_registration_path  GET    /auth/:provider/create     Registarti
 Add the following to `config/config.exs`:
 
 ```elixir
-config :coherence_oauth2, :providers,
+config :coherence_assent, :providers,
        [
          github: [
            client_id: "REPLACE_WITH_CLIENT_ID",

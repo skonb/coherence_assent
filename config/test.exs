@@ -1,23 +1,23 @@
 use Mix.Config
 
 config :coherence,
-  user_schema: CoherenceOauth2.Test.User,
-  repo: CoherenceOauth2.Test.Repo,
-  module: CoherenceOauth2.Test,
-  web_module: CoherenceOauth2,
-  router: CoherenceOauth2.Test.Router,
-  messages_backend: CoherenceOauth2.Test.Coherence.Messages,
+  user_schema: CoherenceAssent.Test.User,
+  repo: CoherenceAssent.Test.Repo,
+  module: CoherenceAssent.Test,
+  web_module: CoherenceAssent,
+  router: CoherenceAssent.Test.Router,
+  messages_backend: CoherenceAssent.Test.Coherence.Messages,
   logged_out_url: "/",
   email_from_name: "Your Name",
   email_from_email: "yourname@example.com",
   opts: [:authenticatable, :recoverable, :lockable, :trackable, :unlockable_with_token, :confirmable, :registerable]
 
-config :coherence_oauth2, ecto_repos: [CoherenceOauth2.Test.Repo]
-config :coherence_oauth2, CoherenceOauth2.Test.Repo,
+config :coherence_assent, ecto_repos: [CoherenceAssent.Test.Repo]
+config :coherence_assent, CoherenceAssent.Test.Repo,
   adapter: Ecto.Adapters.Postgres,
-  database: "coherence_oauth2_test",
+  database: "coherence_assent_test",
   pool: Ecto.Adapters.SQL.Sandbox,
   priv: "priv/test"
-config :coherence_oauth2, CoherenceOauth2.Test.Endpoint,
+config :coherence_assent, CoherenceAssent.Test.Endpoint,
   secret_key_base: "1lJGFCaor+gPGc21GCvn+NE0WDOA5ujAMeZoy7oC5un7NPUXDir8LAE+Iba5bpGH",
-  render_errors: [view: CoherenceOauth2.Test.ErrorView, accepts: ~w(html json)]
+  render_errors: [view: CoherenceAssent.Test.ErrorView, accepts: ~w(html json)]

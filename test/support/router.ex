@@ -1,7 +1,7 @@
-defmodule CoherenceOauth2.Test.Router do
+defmodule CoherenceAssent.Test.Router do
   use Phoenix.Router
   use Coherence.Router
-  use CoherenceOauth2.Router
+  use CoherenceAssent.Router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -22,7 +22,7 @@ defmodule CoherenceOauth2.Test.Router do
   scope "/" do
     pipe_through [:browser, :public]
     coherence_routes()
-    coherence_oauth2_routes()
+    coherence_assent_routes()
   end
 
   scope "/" do

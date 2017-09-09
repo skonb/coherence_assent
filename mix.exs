@@ -1,11 +1,11 @@
-defmodule CoherenceOauth2.Mixfile do
+defmodule CoherenceAssent.Mixfile do
   use Mix.Project
 
   @version "0.1.0"
 
   def project do
     [
-      app: :coherence_oauth2,
+      app: :coherence_assent,
       version: @version,
       elixir: "~> 1.3",
       elixirc_paths: elixirc_paths(Mix.env),
@@ -20,10 +20,10 @@ defmodule CoherenceOauth2.Mixfile do
       package: package(),
 
        # Docs
-       name: "CoherenceOauth2",
-       docs: [source_ref: "v#{@version}", main: "CoherenceOauth2",
-              canonical: "http://hexdocs.pm/coherence_oauth2",
-              source_url: "https://github.com/danschultzer/coherence_oauth2",
+       name: "CoherenceAssent",
+       docs: [source_ref: "v#{@version}", main: "CoherenceAssent",
+              canonical: "http://hexdocs.pm/coherence_assent",
+              source_url: "https://github.com/danschultzer/coherence_assent",
               extras: ["README.md"]]
     ]
   end
@@ -59,7 +59,7 @@ defmodule CoherenceOauth2.Mixfile do
     [
       maintainers: ["Dan Shultzer"],
       licenses: ["MIT"],
-      links: %{github: "https://github.com/danschultzer/coherence_oauth2"},
+      links: %{github: "https://github.com/danschultzer/coherence_assent"},
       files: ~w(lib priv/templates) ++ ~w(LICENSE mix.exs README.md)
     ]
   end

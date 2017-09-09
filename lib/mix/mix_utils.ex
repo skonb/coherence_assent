@@ -1,4 +1,4 @@
-defmodule CoherenceOauth2.Mix.Utils do
+defmodule CoherenceAssent.Mix.Utils do
   @moduledoc false
 
   def raise_option_errors(list) do

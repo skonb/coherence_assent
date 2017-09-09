@@ -1,8 +1,8 @@
-defmodule CoherenceOauth2.Test.Gettext do
-  use Gettext, otp_app: :coherence_oauth2
+defmodule CoherenceAssent.Test.Gettext do
+  use Gettext, otp_app: :coherence_assent
 end
 
-defmodule CoherenceOauth2.Test.Coherence.ViewHelpers do
+defmodule CoherenceAssent.Test.Coherence.ViewHelpers do
   use Phoenix.HTML
 
   @spec required_label(atom, String.t | atom, Keyword.t) :: tuple
@@ -16,7 +16,7 @@ defmodule CoherenceOauth2.Test.Coherence.ViewHelpers do
   end
 end
 
-defmodule CoherenceOauth2.Test.ErrorHelpers do
+defmodule CoherenceAssent.Test.ErrorHelpers do
   @moduledoc """
   Conveniences for translating and building error messages.
   """
@@ -39,7 +39,7 @@ defmodule CoherenceOauth2.Test.ErrorHelpers do
 end
 
 
-defmodule CoherenceOauth2.Test.Web do
+defmodule CoherenceAssent.Test.Web do
   def view do
     quote do
       use Phoenix.View, root: "tmp/coherence/web/templates"
@@ -50,10 +50,10 @@ defmodule CoherenceOauth2.Test.Web do
       # Use all HTML functionality (forms, tags, etc)
       use Phoenix.HTML
 
-      import CoherenceOauth2.Test.Gettext
-      import CoherenceOauth2.Test.ErrorHelpers
-      import CoherenceOauth2.Test.Router.Helpers
-      import CoherenceOauth2.Test.Coherence.ViewHelpers
+      import CoherenceAssent.Test.Gettext
+      import CoherenceAssent.Test.ErrorHelpers
+      import CoherenceAssent.Test.Router.Helpers
+      import CoherenceAssent.Test.Coherence.ViewHelpers
     end
   end
   defmacro __using__(which) when is_atom(which) do

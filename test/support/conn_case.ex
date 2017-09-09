@@ -1,4 +1,4 @@
-defmodule CoherenceOauth2.Test.ConnCase do
+defmodule CoherenceAssent.Test.ConnCase do
   @moduledoc """
   This module defines the test case to be used by
   tests that require setting up a connection.
@@ -19,10 +19,10 @@ defmodule CoherenceOauth2.Test.ConnCase do
     quote do
       # Import conveniences for testing with connections
       use Phoenix.ConnTest
-      import CoherenceOauth2.Test.ErrorView
-      import CoherenceOauth2.Test.Router.Helpers
+      import CoherenceAssent.Test.ErrorView
+      import CoherenceAssent.Test.Router.Helpers
 
-      @endpoint CoherenceOauth2.Test.Endpoint
+      @endpoint CoherenceAssent.Test.Endpoint
 
       def session_conn(conn) do
         opts =
@@ -45,7 +45,7 @@ defmodule CoherenceOauth2.Test.ConnCase do
 
   setup tags do
     unless tags[:async] do
-      :ok = Ecto.Adapters.SQL.Sandbox.checkout(CoherenceOauth2.Test.Repo)
+      :ok = Ecto.Adapters.SQL.Sandbox.checkout(CoherenceAssent.Test.Repo)
     end
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end

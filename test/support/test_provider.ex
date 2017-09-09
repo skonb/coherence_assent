@@ -1,5 +1,5 @@
 defmodule TestProvider do
-  alias CoherenceOauth2.StrategyHelpers, as: Helpers
+  alias CoherenceAssent.StrategyHelpers, as: Helpers
 
   def client(config) do
     [

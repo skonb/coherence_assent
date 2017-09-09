@@ -1,6 +1,6 @@
-alias CoherenceOauth2.Test.Repo
+alias CoherenceAssent.Test.Repo
 
-defmodule CoherenceOauth2.TestCase do
+defmodule CoherenceAssent.TestCase do
   use ExUnit.CaseTemplate
 
   setup do

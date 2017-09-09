@@ -1,14 +1,14 @@
-defmodule CoherenceOauth2.Test.User do
+defmodule CoherenceAssent.Test.User do
   @moduledoc false
   use Ecto.Schema
   use Coherence.Schema
-  use CoherenceOauth2.Schema
+  use CoherenceAssent.Schema
 
   schema "users" do
     field :name, :string
     field :email, :string
     coherence_schema()
-    coherence_oauth2_schema()
+    coherence_assent_schema()
 
     timestamps()
   end
@@ -19,7 +19,7 @@ defmodule CoherenceOauth2.Test.User do
     |> validate_required([:name, :email])
     |> validate_format(:email, ~r/@/)
     |> unique_constraint(:email)
-    |> validate_coherence_oauth2(params)
+    |> validate_coherence_assent(params)
   end
 
   def changeset(model, params, :password) do

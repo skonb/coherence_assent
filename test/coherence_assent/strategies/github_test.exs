@@ -15,7 +15,7 @@ defmodule CoherenceAssent.Strategy.GithubTest do
     {:ok, conn: conn, config: config, params: params, bypass: bypass}
   end
 
-  describe "get_user/2" do
+  describe "callback/2" do
     test "normalizes data", %{conn: conn, config: config, params: params, bypass: bypass} do
       Bypass.expect_once bypass, "POST", "/login/oauth/access_token", fn conn ->
         send_resp(conn, 200, Poison.encode!(%{access_token: "access_token"}))

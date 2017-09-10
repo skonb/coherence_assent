@@ -44,6 +44,7 @@ defmodule CoherenceAssent.Mixfile do
     [
       {:coherence, "~> 0.5.0"},
       {:oauth2, "~> 0.9"},
+      {:oauther, "~> 1.1"},
       {:ecto, "~> 2.1"},
 
       # Dev and test dependencies

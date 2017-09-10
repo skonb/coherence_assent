@@ -1,20 +1,32 @@
 defmodule CoherenceAssent.TwitterTest do
-  use CoherenceAssent.TestCase
+  use CoherenceAssent.Test.ConnCase
 
   import OAuth2.TestHelpers
+  alias CoherenceAssent.Strategy.Twitter
 
-  setup do
+  setup %{conn: conn} do
+    conn = session_conn(conn)
+
     bypass = Bypass.open
-    client = CoherenceAssent.Twitter.client(site: bypass_server(bypass),
-                                             token: %OAuth2.AccessToken{
-                                               access_token: "token"
-                                             })
+    config = [site: bypass_server(bypass)]
+    params = %{"oauth_token" => "test", "oauth_verifier" => "test"}
 
-    {:ok, client: client, bypass: bypass}
+    {:ok, conn: conn, config: config, params: params, bypass: bypass}
   end
 
-  describe "get_user/2" do
-    test "normalizes data", %{client: client, bypass: bypass} do
+  describe "callback/2" do
+    test "normalizes data", %{conn: conn, config: config, params: params, bypass: bypass} do
+      Bypass.expect_once bypass, "POST", "/oauth/access_token", fn conn ->
+        token = %{
+          oauth_token: "7588892-kagSNqWge8gB1WwE3plnFsJHAZVfxWD7Vb57p0b4&",
+          oauth_token_secret: "PbKfYqSryyeKDWz4ebtY3o5ogNLG11WJuZBc9fQrQo"
+        }
+
+        conn
+        |> put_resp_content_type("text/plain")
+        |> Plug.Conn.resp(200, URI.encode_query(token))
+      end
+
       Bypass.expect_once bypass, "GET", "/1.1/account/verify_credentials.json", fn conn ->
         user = %{
           email: nil,
@@ -120,7 +132,10 @@ defmodule CoherenceAssent.TwitterTest do
                    "uid" => "38895958",
                    "urls" => %{"Twitter" => "https://twitter.com/theSeanCook"}}
 
-      assert {:ok, expected} == CoherenceAssent.Twitter.get_user(client)
+       {:ok, %{user: user}} = Twitter.callback(conn: conn,
+                                               config: config,
+                                               params: params)
+       assert expected == user
     end
   end
 end

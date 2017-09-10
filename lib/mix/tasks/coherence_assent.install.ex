@@ -128,7 +128,7 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
 
                @spec oauth_links(conn):: String.t
                def oauth_links(conn) do
-                 CoherenceAssent.clients()
+                 CoherenceAssent.providers!()
                  |> Keyword.keys()
                  |> Enum.map(fn(provider) -> oauth_link(conn, provider) end)
                  |> concat([])

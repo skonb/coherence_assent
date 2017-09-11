@@ -75,5 +75,5 @@ defmodule CoherenceAssent.Test.Coherence.Messages do
   def mailer_required, do: dgettext(@domain, "Mailer configuration required!")
   def account_is_inactive(), do: dgettext(@domain, "Account is inactive!")
 
-  defp dgettext(domain, msg, opts \\ %{}), do: msg
+  def dgettext(domain, msg, opts \\ %{}), do: msg
 end

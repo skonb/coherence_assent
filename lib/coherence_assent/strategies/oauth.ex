@@ -22,7 +22,7 @@ defmodule CoherenceAssent.Strategies.Oauth do
     [site: config[:site],
      url: request_token_url,
      method: "post",
-     params: [],
+     params: params,
      body: "",
      creds: creds]
     |> request
@@ -35,7 +35,7 @@ defmodule CoherenceAssent.Strategies.Oauth do
 
     {:ok, %{conn: conn, token: token, url: url}}
   end
-  defp build_authorize_url({:error, error}, config), do: {:error, error}
+  defp build_authorize_url({:error, error}, _config), do: {:error, error}
 
   def get_access_token({:ok, %{conn: conn}}, config, oauth_token, oauth_verifier) do
     creds = OAuther.credentials(consumer_key: config[:consumer_key] || "",

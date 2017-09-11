@@ -90,7 +90,4 @@ defmodule CoherenceAssent.Strategies.Oauth2 do
     |> Enum.join
     |> String.downcase
   end
-
-  # TMP
-  def dgettext(_domain, msg, _opts \\ %{}), do: msg
 end

@@ -5,7 +5,6 @@ defmodule CoherenceAssent.RegistrationController do
   alias CoherenceAssent.Callback
   import Plug.Conn, only: [get_session: 2, delete_session: 2]
   alias CoherenceAssent.Controller
-  import CoherenceAssent.Strategies.Oauth2, only: [dgettext: 2]
 
   def add_login_field(conn, %{"provider" => _provider} = params) do
     user_schema = Config.user_schema
@@ -50,7 +49,7 @@ defmodule CoherenceAssent.RegistrationController do
     case get_session(conn, :coherence_assent_params) do
       nil ->
         conn = conn
-        |> put_flash(:alert, no_session_data_found())
+        |> put_flash(:alert, CoherenceAssent.messages(:invalid_request))
         |> Controller.get_route(:registration_path, :new)
 
         {:error, conn}
@@ -65,7 +64,4 @@ defmodule CoherenceAssent.RegistrationController do
     |> Application.get_env(:web_module)
     |> Module.concat(Module.concat(modules))
   end
-
-  defp no_session_data_found(),
-    do: dgettext("coherence_assent", "No session data found.")
 end

@@ -58,8 +58,8 @@ The following routes will now be available in your app:
 ```
 coherence_assent_auth_path          GET    /auth/:provider            CoherenceAssent.AuthorizationController :new
 coherence_assent_auth_path          GET    /auth/:provider/callback   CoherenceAssent.AuthorizationController :create
-coherence_assent_registration_path  GET    /auth/:provider/new        CoherenceAssent.RegistartionController  :add_login_field
-coherence_assent_registration_path  GET    /auth/:provider/create     CoherenceAssent.RegistartionController  :create
+coherence_assent_registration_path  GET    /auth/:provider/new        CoherenceAssent.RegistrationController  :add_login_field
+coherence_assent_registration_path  GET    /auth/:provider/create     CoherenceAssent.RegistrationController  :create
 ```
 
 ## Setting up a provider
@@ -77,37 +77,45 @@ config :coherence_assent, :providers,
       ]
 ```
 
-Strategy for Twitter, Facebook, Google and Github are included. You can also add your own. The general structure of the strategy looks like the following:
+Strategy for Twitter, Facebook, Google and Github are included. You can also add your own. You can add your own strategy:
 
 ```elixir
 defmodule TestProvider do
-  def client(config) do
-    config
-    %{
-      strategy: OAuth2.Strategy.AuthCode,
+  alias CoherenceAssent.Strategy.Helpers
+  alias CoherenceAssent.Strategies.Oauth2, as: Oauth2Helper
+
+  def authorize_url(conn: conn, config: config) do
+    config = config |> set_config
+    Oauth2Helper.authorize_url(conn: conn, config: config)
+  end
+
+  def callback(conn: conn, config: config, params: params) do
+    config = config |> set_config
+    Oauth2Helper.callback(conn: conn, config: config, params: params)
+    |> normalize
+  end
+
+  defp set_config(config) do
+    [
       site: "http://localhost:4000/",
       authorize_url: "http://localhost:4000/oauth/authorize",
-      token_url: "http://localhost:4000/oauth/access_token"
-    }
-    |> Map.merge(config)
-    |> OAuth2.Client.new()
+      token_url: "http://localhost:4000/oauth/access_token",
+      user_url: "/user",
+      authorization_params: [scope: "email profile"]
+    ]
+    |> Keyword.merge(config)
+    |> Keyword.put(:strategy, OAuth2.Strategy.AuthCode)
   end
 
-  def authorize_url!(client, params \\ []) do
-    params = Keyword.merge(params, [scope: "user"])
+  defp normalize({:ok, %{conn: conn, client: client, user: user}}) do
+    user = %{"uid"        => user["sub"],
+             "name"       => user["name"],
+             "email"      => user["email"]}
+           |> Helpers.prune
 
-    OAuth2.Client.authorize_url!(client, params)
+    {:ok, %{conn: conn, client: client, user: user}}
   end
-
-  def get_user(client, headers \\ [], params \\ []) do
-    client
-    |> OAuth2.Client.get("/user", headers, params)
-    |> normalize(client)
-  end
-
-  def normalize({:ok, %OAuth2.Response{body: user}}) do
-    {:ok, user}
-  end
+  defp normalize({:error, _} = error), do: error
 end
 ```
 

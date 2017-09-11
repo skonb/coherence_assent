@@ -7,7 +7,7 @@ defmodule CoherenceAssent.Strategy.Facebook do
     Oauth2Helper.authorize_url(conn: conn, config: config)
   end
 
-  def callback(conn: conn, config: config, params: %{"code" => code, "redirect_uri" => redirect_uri} = params) do
+  def callback(conn: conn, config: config, params: params) do
     config = config |> set_config
     client = config |> OAuth2.Client.new()
 

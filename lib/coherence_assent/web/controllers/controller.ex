@@ -2,7 +2,6 @@ defmodule CoherenceAssent.Controller do
   use Coherence.Web, :controller
 
   import Plug.Conn, only: [put_session: 3]
-  import CoherenceAssent.Strategies.Oauth2, only: [dgettext: 3]
   import Phoenix.Naming, only: [humanize: 1]
 
   def get_config!(provider) do
@@ -37,7 +36,7 @@ defmodule CoherenceAssent.Controller do
   end
   def callback_response({:error, :bound_to_different_user}, conn, provider, _user_params, _params) do
     conn
-    |> put_flash(:alert, account_already_bound_to_other_user(provider: humanize(provider)))
+    |> put_flash(:alert, CoherenceAssent.messages(:account_already_bound_to_other_user, %{provider: humanize(provider)}))
     |> redirect(to: get_route(conn, :registration_path, :new))
   end
   def callback_response({:error, :missing_login_field}, conn, provider, user_params, _params) do
@@ -55,7 +54,7 @@ defmodule CoherenceAssent.Controller do
         |> CoherenceAssent.RegistrationController.add_login_field(params, changeset)
       %{errors: _errors} ->
         conn
-        |> put_flash(:alert, could_not_sign_in())
+        |> put_flash(:alert,  CoherenceAssent.messages(:could_not_sign_in))
         |> redirect(to: get_route(conn, :registration_path, :new))
     end
   end
@@ -70,10 +69,4 @@ defmodule CoherenceAssent.Controller do
       _     -> conn
     end
   end
-
-  defp account_already_bound_to_other_user(opts),
-    do: dgettext("coherence_assent", "The %{provider} account is already bound to another user.", opts)
-
-  defp could_not_sign_in(),
-    do: dgettext("coherence_assent", "Could not sign in. Please try again.", %{})
 end

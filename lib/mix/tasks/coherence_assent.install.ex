@@ -125,33 +125,7 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
 
   defp update_coherence_view_helpers(%{web_path: web_path} = config) do
     path = Path.join(web_path, "views/coherence/coherence_view_helpers.ex")
-    string = """
-
-               @spec oauth_links(conn):: String.t
-               def oauth_links(conn),
-                 do: oauth_links(conn, nil)
-
-               @spec oauth_links(conn, Ecto.Schema.t | Ecto.Changeset.t):: String.t
-               def oauth_links(conn, current_user) do
-                 CoherenceAssent.providers!()
-                 |> Keyword.keys()
-                 |> Enum.map(fn(provider) -> oauth_link(conn, provider, current_user) end)
-                 |> concat([])
-               end
-
-               @spec oauth_link(conn, String.t | atom, Ecto.Schema.t | Ecto.Changeset.t | nil) :: String.t
-               def oauth_link(conn, provider, nil) do
-                 :login_with_provider
-                 |> CoherenceAssent.messages(%{provider: provider})
-                 |> link(to: @helpers.coherence_assent_auth_path(conn, :index, provider))
-               end
-               def oauth_link(conn, provider, _current_user) do
-                 :remove_provider_authentication
-                 |> CoherenceAssent.messages(%{provider: provider})
-                 |> link(to: @helpers.coherence_assent_auth_path(conn, :destroy, provider))
-               end
-             """
-
+    string = "use Phoenix.HTML"
 
     path
     |> File.lstat()
@@ -161,7 +135,7 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
   defp update_coherence_view_helpers_file({:ok, %{type: :regular}}, config, helpers_path, string) do
     helpers_path
     |> File.read!()
-    |> add_to_end_in_module(string, ~r/#{Regex.escape("def oauth_link")}/)
+    |> add_after_in_content(string, "use CoherenceAssent.ViewHelpers")
     |> update_file(helpers_path)
 
     config

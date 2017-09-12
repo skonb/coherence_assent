@@ -42,7 +42,7 @@ defmodule CoherenceAssent.Router do
       scope "/#{options[:scope]}", as: "coherence_assent" do
         get "/:provider", CoherenceAssent.AuthController, :index
         get "/:provider/callback", CoherenceAssent.AuthController, :callback
-        delete "/:provider", CoherenceAssent.AuthController, :destroy
+        delete "/:provider", CoherenceAssent.AuthController, :delete
         get "/:provider/new", CoherenceAssent.RegistrationController, :add_login_field
         post "/:provider/create", CoherenceAssent.RegistrationController, :create
       end

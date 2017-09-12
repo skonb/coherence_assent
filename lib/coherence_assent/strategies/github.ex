@@ -26,7 +26,7 @@ defmodule CoherenceAssent.Strategy.Github do
       authorize_url: "https://github.com/login/oauth/authorize",
       token_url: "https://github.com/login/oauth/access_token",
       user_url: "/user",
-      authorization_params: ["user,user:email"]
+      authorization_params: [scope: "user,user:email"]
     ]
     |> Keyword.merge(config)
     |> Keyword.put(:strategy, OAuth2.Strategy.AuthCode)

@@ -23,26 +23,26 @@ defmodule CoherenceAssent.AuthController do
 
   def callback(conn, %{"provider" => provider} = params) do
     config = Controller.get_config!(provider)
+    params = %{"redirect_uri" => redirect_uri(conn, provider)}
+             |> Map.merge(params)
 
     config
     |> Controller.call_strategy!(:callback, [[conn: conn, config: config, params: params]])
     |> callback_handler(provider, params)
   end
 
-  def destroy(conn, %{"provider" => provider}) do
+  def delete(conn, %{"provider" => provider}) do
     conn
     |> Coherence.current_user()
     |> CoherenceAssent.UserIdentities.delete_identity_from_user(provider)
     |> case do
          {:ok, _} ->
-           conn
-           |> put_flash(:info, Coherence.Messages.backend().authentication_has_been_removed(%{provider: humanize(provider)}))
+           msg = Coherence.Messages.backend().authentication_has_been_removed(%{provider: humanize(provider)})
+           put_flash(conn, :info, msg)
 
          {:error, %{errors: [user: {"needs password", []}]}} ->
            msg = Coherence.Messages.backend().identity_cannot_be_removed_missing_user_password()
-
-           conn
-           |> put_flash(:alert, msg)
+           put_flash(conn, :error, msg)
        end
     |> redirect(to: Controller.get_route(conn, :registration_path, :edit))
   end

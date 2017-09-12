@@ -12,7 +12,7 @@ defmodule CoherenceAssent.Strategies.OAuth2 do
     url          = config
                    |> OAuth2.Client.new()
                    |> OAuth2.Client.authorize_url!(params)
-    conn         = Plug.Conn.put_session(conn, "coherence_assent.oauth2.state", state)
+    conn         = Plug.Conn.put_session(conn, "coherence_assent.state", state)
 
     {:ok, %{conn: conn, url: url}}
   end

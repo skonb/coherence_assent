@@ -50,7 +50,7 @@ defmodule CoherenceAssent.AuthControllerTest do
       |> get(coherence_assent_auth_path(conn, :callback, @provider, @callback_params))
 
       assert redirected_to(conn) == "/registrations/new"
-      assert get_flash(conn, :alert) == "The %{provider} account is already bound to another user."
+      assert get_flash(conn, :error) == "The %{provider} account is already bound to another user."
     end
 
     test "with valid params", %{conn: conn, server: server, user: user} do
@@ -156,11 +156,11 @@ defmodule CoherenceAssent.AuthControllerTest do
 
       conn = conn
       |> assign(Coherence.Config.assigns_key, user)
-      |> delete(coherence_assent_auth_path(conn, :destroy, @provider))
+      |> delete(coherence_assent_auth_path(conn, :delete, @provider))
 
       assert redirected_to(conn) == Coherence.ControllerHelpers.router_helpers().registration_path(conn, :edit)
       assert length(get_user_identities()) == 1
-      assert get_flash(conn, :alert) == "Authentication cannot be removed until you've entered a password for your account."
+      assert get_flash(conn, :error) == "Authentication cannot be removed until you've entered a password for your account."
     end
 
     test "with two identities", %{conn: conn, user: user} do
@@ -169,7 +169,7 @@ defmodule CoherenceAssent.AuthControllerTest do
 
       conn = conn
       |> assign(Coherence.Config.assigns_key, user)
-      |> delete(coherence_assent_auth_path(conn, :destroy, @provider))
+      |> delete(coherence_assent_auth_path(conn, :delete, @provider))
 
       assert redirected_to(conn) == Coherence.ControllerHelpers.router_helpers().registration_path(conn, :edit)
       assert length(get_user_identities()) == 1
@@ -183,7 +183,7 @@ defmodule CoherenceAssent.AuthControllerTest do
 
       conn = conn
       |> assign(Coherence.Config.assigns_key, user)
-      |> delete(coherence_assent_auth_path(conn, :destroy, @provider))
+      |> delete(coherence_assent_auth_path(conn, :delete, @provider))
 
       assert redirected_to(conn) == Coherence.ControllerHelpers.router_helpers().registration_path(conn, :edit)
       assert length(get_user_identities()) == 0
@@ -192,7 +192,7 @@ defmodule CoherenceAssent.AuthControllerTest do
     test "with current_user session without provider", %{conn: conn, user: user} do
       conn = conn
       |> assign(Coherence.Config.assigns_key, user)
-      |> delete(coherence_assent_auth_path(conn, :destroy, @provider))
+      |> delete(coherence_assent_auth_path(conn, :delete, @provider))
 
       assert redirected_to(conn) == Coherence.ControllerHelpers.router_helpers().registration_path(conn, :edit)
     end

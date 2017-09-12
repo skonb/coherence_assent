@@ -61,8 +61,7 @@ defmodule Mix.Tasks.CoherenceAssent.InstallTest do
 
       file_path = "lib/coherence_assent_web/views/coherence/coherence_view_helpers.ex"
       assert_file file_path, fn file ->
-        assert file =~ "def oauth_links"
-        assert file =~ "def oauth_link"
+        assert file =~ "use CoherenceAssent.ViewHelpers"
       end
       assert {{:module, _, _, _}, _} = Code.eval_file file_path
 

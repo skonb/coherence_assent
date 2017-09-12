@@ -15,6 +15,11 @@ defmodule CoherenceAssent.GoogleTest do
     {:ok, conn: conn, config: config, params: params, bypass: bypass}
   end
 
+  test "authorize_url/2", %{conn: conn, config: config} do
+    assert {:ok, %{conn: _conn, url: url}} = Google.authorize_url(conn: conn, config: config)
+    assert url =~ "https://accounts.google.com/o/oauth2/auth?client_id="
+  end
+
   describe "callback/2" do
     test "normalizes data", %{conn: conn, config: config, params: params, bypass: bypass} do
       Bypass.expect_once bypass, "POST", "/o/oauth2/token", fn conn ->

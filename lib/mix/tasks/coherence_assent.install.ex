@@ -160,6 +160,8 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
     path = Path.join(web_path, "coherence_messages.ex")
     string = """
 
+               @behavior CoherenceAssent.Messages
+
                def could_not_sign_in, do: dgettext("coherence_assent", "Could not sign in. Please try again.")
                def identity_cannot_be_removed_missing_user_password, do: dgettext("coherence_assent", "Authentication cannot be removed until you've entered a password for your account.")
                def account_already_bound_to_other_user(opts), do: dgettext("coherence_assent", "The %{provider} account is already bound to another user.", opts)

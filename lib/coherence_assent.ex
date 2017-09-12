@@ -5,11 +5,6 @@ defmodule CoherenceAssent do
   """
 
   @doc false
-  def config() do
-    Application.get_env(:coherence_assent, CoherenceAssent, [])
-  end
-
-  @doc false
   def config(provider) do
     providers!()
     |> Keyword.get(String.to_atom(provider), nil)

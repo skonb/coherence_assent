@@ -97,7 +97,7 @@ defmodule CoherenceAssent.AuthControllerTest do
     end
 
     test "with failed token generation", %{conn: conn, server: server} do
-      bypass server, "POST", "/oauth/token", fn conn ->
+      Bypass.expect_once server, "POST",  "/oauth/token", fn conn ->
         send_resp(conn, 401, Poison.encode!(%{error: "invalid_client"}))
       end
 
@@ -135,11 +135,11 @@ defmodule CoherenceAssent.AuthControllerTest do
     end
 
     defp bypass_oauth(server, token_params \\ %{}, user_params \\ %{}) do
-      bypass server, "POST", "/oauth/token", fn conn ->
+      Bypass.expect_once server, "POST", "/oauth/token", fn conn ->
         send_resp(conn, 200, Poison.encode!(Map.merge(%{access_token: "access_token"}, token_params)))
       end
 
-      bypass server, "GET", "/api/user", fn conn ->
+      Bypass.expect_once server, "GET", "/api/user", fn conn ->
         send_resp(conn, 200, Poison.encode!(Map.merge(%{uid: "1", name: "Dan Schultzer"}, user_params)))
       end
     end

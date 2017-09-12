@@ -14,6 +14,11 @@ defmodule CoherenceAssent.Strategy.FacebookTest do
     {:ok, conn: conn, config: config, params: params, bypass: bypass}
   end
 
+  test "authorize_url/2", %{conn: conn, config: config} do
+    assert {:ok, %{conn: _conn, url: url}} = Facebook.authorize_url(conn: conn, config: config)
+    assert url =~ "https://www.facebook.com/v2.6/dialog/oauth?client_id="
+  end
+
   describe "callback/2" do
     test "normalizes data", %{conn: conn, config: config, params: params, bypass: bypass} do
       Bypass.expect_once bypass, "POST", "/oauth/access_token", fn conn ->

@@ -1,7 +1,7 @@
 defmodule CoherenceAssent.ViewHelpers do
   @moduledoc false
 
-  defmacro __using__(opts) do
+  defmacro __using__(_opts) do
     quote do
       @spec oauth_links(conn):: String.t
       def oauth_links(conn), do: oauth_links(conn, nil)

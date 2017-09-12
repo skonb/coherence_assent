@@ -10,9 +10,11 @@ defmodule TestHelpers do
     # Add app layout file
     layout_path = path <> "/templates/layout"
     File.mkdir_p! layout_path
-    {:ok, file} = File.open layout_path <> "/app.html.eex", [:write]
+    file_path = layout_path <> "/app.html.eex"
+    {:ok, file} = File.open file_path, [:write]
     IO.binwrite file, "<%= render @view_module, @view_template, assigns %>"
     File.close file
+    # EEx.compile_file(file_path, engine: Phoenix.HTML.Engine, trim: true)
   end
 
   def setup do
@@ -21,18 +23,19 @@ defmodule TestHelpers do
     save_app_file(web_path)
     clear_path("priv/test/migrations")
     install_coherence(web_path)
-    recompile()
+    reload_views()
     setup_db()
   end
 
   defp install_coherence(web_path) do
-    Mix.Task.run "coh.install", ~w(--full --confirmable --invitable --no-config --no-models --no-views --no-web --no-messages --web-path=#{web_path} --no-controllers --repo=CoherenceAssent.Test.Repo --silent)
+    Mix.Task.run "coh.install", ~w(--full --confirmable --invitable --no-config --no-models --no-views --no-web --no-messages --web-path=#{web_path} --no-controllers --repo=CoherenceAssent.Test.Repo --web-module=CoherenceAssent.Test.Web --silent)
     Mix.Task.run "coherence_assent.install", ~w(--no-update-coherence --web-path=#{web_path} --silent)
+    # EEx.compile_file("tmp/coherence/web/templates/coherence/registration/add_login_field.html.eex")
   end
 
-  defp recompile do
-    Mix.Task.reenable "compile.elixir"
-    Mix.Task.run "compile.elixir"
+  defp reload_views() do
+    Code.load_file("test/support/web/views/layout_view.ex")
+    Code.load_file("test/support/web/views/registration_view.ex")
   end
 
   defp setup_db do

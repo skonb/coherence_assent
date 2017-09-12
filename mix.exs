@@ -12,11 +12,14 @@ defmodule CoherenceAssent.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       compilers: [:phoenix] ++ Mix.compilers,
-      preferred_cli_env: [credo: :test, ex_doc: :test],
+      preferred_cli_env: [credo: :test,
+                          ex_doc: :test,
+                          "coveralls.html": :test],
       deps: deps(),
+      test_coverage: [tool: ExCoveralls],
 
       # Hex
-      description: "OAuth 2 client support for Coherence",
+      description: "Multi-provider support for Coherence",
       package: package(),
 
        # Docs
@@ -50,6 +53,7 @@ defmodule CoherenceAssent.Mixfile do
       # Dev and test dependencies
       {:postgrex, ">= 0.11.1", only: :test},
       {:credo, "~> 0.7", only: [:dev, :test]},
+      {:excoveralls, "~> 0.7", only: :test},
       {:bypass, "~> 0.8", only: :test},
       {:ex_doc, "~> 0.14", only: :dev, runtime: false},
       {:phoenix_ecto, "~> 3.2", only: :test}
@@ -61,7 +65,7 @@ defmodule CoherenceAssent.Mixfile do
       maintainers: ["Dan Shultzer"],
       licenses: ["MIT"],
       links: %{github: "https://github.com/danschultzer/coherence_assent"},
-      files: ~w(lib priv/templates) ++ ~w(LICENSE mix.exs README.md)
+      files: ~w(lib priv/templates priv/boilerplate) ++ ~w(LICENSE mix.exs README.md)
     ]
   end
 end

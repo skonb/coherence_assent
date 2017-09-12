@@ -35,6 +35,18 @@ Run to install coherence_assent:
 mix coherence_assent.install
 ```
 
+The install script will attempt to update the following files that Coherence have installed:
+
+```
+LIB_PATH/coherence/user.ex
+WEB_PATH/templates/coherence/edit.html.eex
+WEB_PATH/templates/coherence/new.html.eex
+WEB_PATH/views/coherence/coherence_view_helpers.ex
+WEB_PATH/coherence_messages.ex
+```
+
+If the files cannot be found, install instructions will be printed instead. It's important that you update all files according to these instructions.
+
 Set up routes:
 
 ```elixir

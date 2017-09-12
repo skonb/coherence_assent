@@ -28,7 +28,7 @@ defmodule CoherenceAssent.Strategy.Facebook do
       authorize_url: "https://www.facebook.com/v2.6/dialog/oauth",
       token_url: "/oauth/access_token",
       user_url: "/me",
-      authorization_params: ["email"],
+      authorization_params: [{"scope", "email"}],
       user_url_request_fields: "name,email"
     ]
     |> Keyword.merge(config)

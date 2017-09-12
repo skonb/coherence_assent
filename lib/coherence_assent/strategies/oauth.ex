@@ -6,7 +6,7 @@ defmodule CoherenceAssent.Strategies.OAuth do
   @doc false
   def authorize_url(conn: conn, config: config) do
     {:ok, %{conn: conn}}
-    |> get_request_token(config, [oauth_callback: config[:oauth_callback]])
+    |> get_request_token(config, [{"oauth_callback", config[:redirect_uri]}])
     |> build_authorize_url(config)
   end
 

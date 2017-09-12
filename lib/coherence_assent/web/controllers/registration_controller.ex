@@ -49,7 +49,7 @@ defmodule CoherenceAssent.RegistrationController do
     case get_session(conn, :coherence_assent_params) do
       nil ->
         conn = conn
-        |> put_flash(:alert, CoherenceAssent.messages(:invalid_request))
+        |> put_flash(:alert, Coherence.Messages.backend().invalid_request())
         |> Controller.get_route(:registration_path, :new)
 
         {:error, conn}

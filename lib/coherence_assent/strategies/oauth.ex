@@ -1,4 +1,7 @@
-defmodule CoherenceAssent.Strategies.Oauth do
+defmodule CoherenceAssent.Strategies.OAuth do
+  @moduledoc """
+  OAuth 1.0 strategy.
+  """
 
   @doc false
   def authorize_url(conn: conn, config: config) do
@@ -56,7 +59,8 @@ defmodule CoherenceAssent.Strategies.Oauth do
     signed_params = OAuther.sign(method, url, params, creds)
     {header, req_params} = OAuther.header(signed_params)
 
-    OAuth2.Request.request(method, %OAuth2.Client{site: site}, url, body, [header], [form: req_params])
+    method
+    |> OAuth2.Request.request(%OAuth2.Client{site: site}, url, body, [header], [form: req_params])
     |> case do
          {:ok, response} ->
            {:ok, response.body}

@@ -5,7 +5,7 @@ config :coherence,
   repo: CoherenceAssent.Test.Repo,
   module: CoherenceAssent.Test,
   web_module: CoherenceAssent,
-  router: CoherenceAssent.Test.Router,
+  router: CoherenceAssent.Test.Web.Router,
   messages_backend: CoherenceAssent.Test.Coherence.Messages,
   logged_out_url: "/",
   email_from_name: "Your Name",
@@ -18,6 +18,7 @@ config :coherence_assent, CoherenceAssent.Test.Repo,
   database: "coherence_assent_test",
   pool: Ecto.Adapters.SQL.Sandbox,
   priv: "priv/test"
-config :coherence_assent, CoherenceAssent.Test.Endpoint,
+
+config :coherence_assent, CoherenceAssent.Test.Web.Endpoint,
   secret_key_base: "1lJGFCaor+gPGc21GCvn+NE0WDOA5ujAMeZoy7oC5un7NPUXDir8LAE+Iba5bpGH",
-  render_errors: [view: CoherenceAssent.Test.ErrorView, accepts: ~w(html json)]
+  render_errors: [view: CoherenceAssent.ErrorView, accepts: ~w(html json)]

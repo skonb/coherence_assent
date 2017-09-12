@@ -19,10 +19,10 @@ defmodule CoherenceAssent.Test.ConnCase do
     quote do
       # Import conveniences for testing with connections
       use Phoenix.ConnTest
-      import CoherenceAssent.Test.ErrorView
-      import CoherenceAssent.Test.Router.Helpers
+      import CoherenceAssent.ErrorView
+      import CoherenceAssent.Test.Web.Router.Helpers
 
-      @endpoint CoherenceAssent.Test.Endpoint
+      @endpoint CoherenceAssent.Test.Web.Endpoint
 
       def session_conn(conn) do
         opts =

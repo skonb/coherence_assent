@@ -100,6 +100,7 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
     config
     |> update_user_model
     |> update_coherence_view_helpers
+    |> update_coherence_messages
     |> update_coherence_templates
   end
   defp update_coherence_files(config), do: config
@@ -116,108 +117,165 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
   defp update_user_model_file(user_path) do
     user_path
     |> File.read!()
-    |> add_after_in_user_model("use Coherence.Schema", "use CoherenceAssent.Schema")
-    |> add_after_in_user_model("coherence_schema()", "coherence_assent_schema()")
-    |> replace_in_user_model("|> validate_coherence(params)", "|> validate_coherence_assent(params)")
+    |> add_after_in_content("use Coherence.Schema", "use CoherenceAssent.Schema")
+    |> add_after_in_content("coherence_schema()", "coherence_assent_schema()")
+    |> replace_in_content("|> validate_coherence(params)", "|> validate_coherence_assent(params)")
     |> update_file(user_path)
   end
 
   defp update_coherence_view_helpers(%{web_path: web_path} = config) do
-    helpers_path = Path.join(web_path, "views/coherence/coherence_view_helpers.ex")
+    path = Path.join(web_path, "views/coherence/coherence_view_helpers.ex")
     string = """
 
                @spec oauth_links(conn):: String.t
-               def oauth_links(conn) do
+               def oauth_links(conn),
+                 do: oauth_links(conn, nil)
+
+               @spec oauth_links(conn, Ecto.Schema.t | Ecto.Changeset.t):: String.t
+               def oauth_links(conn, current_user) do
                  CoherenceAssent.providers!()
                  |> Keyword.keys()
-                 |> Enum.map(fn(provider) -> oauth_link(conn, provider) end)
+                 |> Enum.map(fn(provider) -> oauth_link(conn, provider, current_user) end)
                  |> concat([])
                end
 
-               @spec oauth_link(conn, String.t | atom) :: String.t
-               def oauth_link(conn, provider) do
-                 "coherence"
-                 |> dgettext("Login with %{provider}", provider: provider)
+               @spec oauth_link(conn, String.t | atom, Ecto.Schema.t | Ecto.Changeset.t | nil) :: String.t
+               def oauth_link(conn, provider, nil) do
+                 :login_with_provider
+                 |> CoherenceAssent.messages(%{provider: provider})
                  |> link(to: @helpers.coherence_assent_auth_path(conn, :index, provider))
+               end
+               def oauth_link(conn, provider, _current_user) do
+                 :remove_provider_authentication
+                 |> CoherenceAssent.messages(%{provider: provider})
+                 |> link(to: @helpers.coherence_assent_auth_path(conn, :destroy, provider))
                end
              """
 
-    case File.lstat(helpers_path) do
-      {:ok, %{type: :regular}} ->
-        update_coherence_view_helpers_file(helpers_path, string, ~r/(def oauth\_link)/)
-        config
-      _ ->
-          config
-          |> Map.merge(%{
-            instructions:
-          """
-          #{config.instructions}
 
-          Could not find #{helpers_path}.
-
-          Add the following to your view helpers:
-
-          #{string}
-          """
-          })
-    end
+    path
+    |> File.lstat()
+    |> update_coherence_view_helpers_file(config, path, string)
   end
 
-  defp update_coherence_view_helpers_file(helpers_path, string, regex_needle) do
+  defp update_coherence_view_helpers_file({:ok, %{type: :regular}}, config, helpers_path, string) do
     helpers_path
     |> File.read!()
-    |> add_to_end_in_module(string, regex_needle)
+    |> add_to_end_in_module(string, ~r/#{Regex.escape("def oauth_link")}/)
     |> update_file(helpers_path)
+
+    config
+  end
+  defp update_coherence_view_helpers_file(_stat, config, helpers_path, string) do
+    config
+    |> Map.merge(%{
+      instructions:
+    """
+    #{config.instructions}
+
+    Could not find #{helpers_path}.
+
+    Add the following to your view helpers:
+
+    #{string}
+    """
+    })
+  end
+
+  defp update_coherence_messages(%{web_path: web_path} = config) do
+    path = Path.join(web_path, "coherence_messages.ex")
+    string = """
+
+               def could_not_sign_in, do: dgettext("coherence_assent", "Could not sign in. Please try again.")
+               def identity_cannot_be_removed_missing_user_password, do: dgettext("coherence_assent", "Authentication cannot be removed until you've entered a password for your account.")
+               def account_already_bound_to_other_user(opts), do: dgettext("coherence_assent", "The %{provider} account is already bound to another user.", opts)
+               def login_with_provider(opts), do: dgettext("coherence_assent", "Sign in with %{provider}", opts)
+               def remove_provider_authentication(opts), do: dgettext("coherence_assent", "Remove %{provider} authentication", opts)
+               def authentication_has_been_removed(opts), do: dgettext("coherence_assent", "Authentication with %{provider} has been removed", opts)
+             """
+
+
+    path
+    |> File.lstat()
+    |> update_coherence_messages_file(config, path, string)
+  end
+
+  defp update_coherence_messages_file({:ok, %{type: :regular}}, config, messages_path, string) do
+    messages_path
+    |> File.read!()
+    |> add_to_end_in_module(string, ~r/#{Regex.escape("def could_not_sign_in")}/)
+    |> update_file(messages_path)
+
+    config
+  end
+  defp update_coherence_messages_file(_stat, config, messages_path, string) do
+    config
+    |> Map.merge(%{
+      instructions:
+    """
+    #{config.instructions}
+
+    Could not find #{messages_path}.
+
+    Add the following to your messages:
+
+    #{string}
+    """
+    })
   end
 
   defp update_coherence_templates(%{web_path: web_path} = config) do
-    session_template = Path.join(web_path, "templates/coherence/session/new.html.eex")
-    registration_template = Path.join(web_path, "templates/coherence/registration/new.html.eex")
-    string = "<%= oauth_links(@conn) %>"
-
-    case {File.lstat(registration_template), File.lstat(session_template)} do
-      {{:ok, %{type: :regular}}, {:ok, %{type: :regular}}} ->
-        update_coherence_templates(registration_template, string)
-        update_coherence_templates(session_template, string)
-        config
-      _ ->
-          config
-          |> Map.merge(%{
-            instructions:
-          """
-          #{config.instructions}
-
-          Could not find the following files:
-          #{session_template}
-          #{registration_template}
-
-          Add "#{string}" to the login and registration template files.
-          """
-          })
-    end
+    config
+    |> update_coherence_template(web_path, "templates/coherence/session/new.html.eex", "<%= oauth_links(@conn) %>")
+    |> update_coherence_template(web_path, "templates/coherence/registration/new.html.eex", "<%= oauth_links(@conn) %>")
+    |> update_coherence_template(web_path, "templates/coherence/registration/edit.html.eex", "<%= oauth_links(@conn, @current_user) %>")
   end
 
-  defp update_coherence_templates(path, string) do
+  defp update_coherence_template(config, web_path, path, string) do
+    path = Path.join(web_path, path)
+
+    path
+    |> File.lstat()
+    |> add_to_coherence_template_file(config, path, string)
+  end
+
+  defp add_to_coherence_template_file({:ok, %{type: :regular}}, config, path, string) do
     content = File.read!(path)
 
-    case String.contains?(content, string) do
-      true -> content
-      _    -> content <> "\n" <> string
-    end
+    content
+    |> String.contains?(string)
+    |> case do
+         true -> content
+         _    -> content <> "\n" <> string
+       end
     |> update_file(path)
+
+    config
+  end
+  defp add_to_coherence_template_file(_stat, config, path, string) do
+    config
+    |> Map.merge(%{
+      instructions:
+    """
+    #{config.instructions}
+
+    Could not find "#{path}". Add "#{string}" to the login and
+    registration template files.
+    """
+    })
   end
 
-  defp add_after_in_user_model(string, needle, replacement) do
+  defp add_after_in_content(content, needle, replacement) do
     regex = ~r/^((\s*)#{Regex.escape(needle)})$/m
     regex_replacement = "\\1\n\\2#{replacement}"
 
-    replace(string, regex, regex_replacement, needle, replacement)
+    replace(content, regex, regex_replacement, needle, replacement)
   end
 
-  defp replace_in_user_model(string, needle, replacement) do
+  defp replace_in_content(content, needle, replacement) do
     regex = ~r/#{Regex.escape(needle)}/
 
-    replace(string, regex, replacement, needle, replacement)
+    replace(content, regex, replacement, needle, replacement)
   end
 
   defp add_to_end_in_module(string, insert, regex_needle) do

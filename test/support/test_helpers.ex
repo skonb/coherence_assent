@@ -1,6 +1,6 @@
 defmodule OAuth2.TestHelpers do
   @moduledoc """
-  Oauth server mock has been lifted from
+  OAuth server mock has been lifted from
   https://github.com/scrogson/oauth2/blob/master/test/support/test_helpers.ex
   """
 

@@ -1,16 +1,21 @@
 defmodule CoherenceAssent.Strategy.Github do
+  @moduledoc """
+  Github OAuth 2.0 strategy.
+  """
+
   alias CoherenceAssent.Strategy.Helpers
-  alias CoherenceAssent.Strategies.Oauth2, as: Oauth2Helper
+  alias CoherenceAssent.Strategies.OAuth2, as: OAuth2Helper
 
   def authorize_url(conn: conn, config: config) do
     config = config |> set_config
-    Oauth2Helper.authorize_url(conn: conn, config: config)
+    OAuth2Helper.authorize_url(conn: conn, config: config)
   end
 
   def callback(conn: conn, config: config, params: params) do
     config = config |> set_config
 
-    Oauth2Helper.callback(conn: conn, config: config, params: params)
+    [conn: conn, config: config, params: params]
+    |> OAuth2Helper.callback()
     |> get_email
     |> normalize
   end

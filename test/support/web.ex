@@ -1,4 +1,4 @@
-defmodule CoherenceAssent.Test.Gettext do
+defmodule CoherenceAssent.Test.Web.Gettext do
   use Gettext, otp_app: :coherence_assent
 end
 
@@ -16,7 +16,7 @@ defmodule CoherenceAssent.Test.Coherence.ViewHelpers do
   end
 end
 
-defmodule CoherenceAssent.Test.ErrorHelpers do
+defmodule CoherenceAssent.Test.Web.ErrorHelpers do
   @moduledoc """
   Conveniences for translating and building error messages.
   """
@@ -50,9 +50,9 @@ defmodule CoherenceAssent.Test.Web do
       # Use all HTML functionality (forms, tags, etc)
       use Phoenix.HTML
 
-      import CoherenceAssent.Test.Gettext
-      import CoherenceAssent.Test.ErrorHelpers
-      import CoherenceAssent.Test.Router.Helpers
+      import CoherenceAssent.Test.Web.Gettext
+      import CoherenceAssent.Test.Web.ErrorHelpers
+      import CoherenceAssent.Test.Web.Router.Helpers
       import CoherenceAssent.Test.Coherence.ViewHelpers
     end
   end

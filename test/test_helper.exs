@@ -15,14 +15,6 @@ defmodule TestHelpers do
     File.close file
   end
 
-  defp clear_migrations_path() do
-    migrations_path = "priv/test/migrations"
-    if File.dir? migrations_path do
-      File.rm_rf! migrations_path
-    end
-    File.mkdir_p! migrations_path
-  end
-
   def setup do
     web_path = "tmp/coherence/web"
     clear_path(web_path)
@@ -57,7 +49,7 @@ Logger.configure(level: :info)
 ExUnit.start()
 Application.ensure_all_started(:bypass)
 
-{:ok, _pid} = CoherenceAssent.Test.Endpoint.start_link
+{:ok, _pid} = CoherenceAssent.Test.Web.Endpoint.start_link
 {:ok, _pid} = CoherenceAssent.Test.Repo.start_link
 
 Ecto.Adapters.SQL.Sandbox.mode(CoherenceAssent.Test.Repo, :manual)

@@ -1,10 +1,14 @@
 defmodule CoherenceAssent.Strategy.Facebook do
+  @moduledoc """
+  Facebook OAuth 2.0 strategy.
+  """
+
   alias CoherenceAssent.Strategy.Helpers
-  alias CoherenceAssent.Strategies.Oauth2, as: Oauth2Helper
+  alias CoherenceAssent.Strategies.OAuth2, as: OAuth2Helper
 
   def authorize_url(conn: conn, config: config) do
     config = config |> set_config
-    Oauth2Helper.authorize_url(conn: conn, config: config)
+    OAuth2Helper.authorize_url(conn: conn, config: config)
   end
 
   def callback(conn: conn, config: config, params: params) do
@@ -12,8 +16,8 @@ defmodule CoherenceAssent.Strategy.Facebook do
     client = config |> OAuth2.Client.new()
 
     {:ok, %{conn: conn, client: client}}
-    |> Oauth2Helper.check_conn(params)
-    |> Oauth2Helper.get_access_token(params)
+    |> OAuth2Helper.check_conn(params)
+    |> OAuth2Helper.get_access_token(params)
     |> get_user(config)
     |> normalize()
   end
@@ -36,7 +40,7 @@ defmodule CoherenceAssent.Strategy.Facebook do
     |> OAuth2.Client.put_param(:appsecret_proof, appsecret_proof(client))
     |> OAuth2.Client.put_param(:fields, config[:user_url_request_fields])
 
-    Oauth2Helper.get_user({:ok, %{conn: conn, client: client}}, config)
+    OAuth2Helper.get_user({:ok, %{conn: conn, client: client}}, config)
   end
   defp get_user({:error, _} = error, _config), do: error
 

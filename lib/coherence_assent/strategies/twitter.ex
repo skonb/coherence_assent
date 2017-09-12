@@ -1,15 +1,21 @@
 defmodule CoherenceAssent.Strategy.Twitter do
+  @moduledoc """
+  Twitter OAuth 1.0 strategy.
+  """
+
   alias CoherenceAssent.Strategy.Helpers
-  alias CoherenceAssent.Strategies.Oauth, as: OauthHelper
+  alias CoherenceAssent.Strategies.OAuth, as: OAuthHelper
 
   def authorize_url(conn: conn, config: config) do
     config = config |> set_config
-    OauthHelper.authorize_url(conn: conn, config: config)
+    OAuthHelper.authorize_url(conn: conn, config: config)
   end
 
   def callback(conn: conn, config: config, params: params) do
     config = config |> set_config
-    OauthHelper.callback(conn: conn, config: config, params: params)
+
+    [conn: conn, config: config, params: params]
+    |> OAuthHelper.callback()
     |> normalize
   end
 

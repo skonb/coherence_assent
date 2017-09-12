@@ -1,6 +1,6 @@
 defmodule CoherenceAssent.UserIdentities do
   @moduledoc """
-  The boundary for the OauthAccessGrants system.
+  The boundary for the UserIdentities system.
   """
 
   import Ecto.{Query, Changeset}, warn: false
@@ -11,10 +11,10 @@ defmodule CoherenceAssent.UserIdentities do
 
   ## Examples
 
-      iex> get_grant_for("github", "uid")
+      iex> get_user_from_identity_params("github", "uid")
       %User{}
 
-      iex> get_grant_for("github", "invalid_uid")
+      iex> get_user_from_identity_params("github", "invalid_uid")
       ** nil
 
   """
@@ -40,10 +40,10 @@ defmodule CoherenceAssent.UserIdentities do
 
   ## Examples
 
-      iex> create_identity(user, params)
-      {:ok, %OauthAccessGrant{}}
+      iex> create_identity(user, "github", 1)
+      {:ok, %UserIdentity{}}
 
-      iex> create_identity(user, params)
+      iex> create_identity(user, "github", 1)
       {:error, %Ecto.Changeset{}}
 
   """
@@ -60,4 +60,53 @@ defmodule CoherenceAssent.UserIdentities do
     |> validate_required([:provider, :uid, :user])
     |> unique_constraint(:uid_provider, name: :user_identities_uid_provider_index)
   end
+
+  @doc """
+  Deletes identity from user.
+
+  ## Examples
+
+      iex> delete_identity_from_user(user, "github", 1)
+      {:ok, %UserIdentity{}}
+
+      iex> delete_identity_from_user(user, "github", 0)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_identity_from_user(user, provider) do
+    UserIdentity
+    |> CoherenceAssent.repo.get_by(provider: provider, user_id: user.id)
+    |> delete_identity()
+  end
+
+  defp delete_identity(%UserIdentity{} = identity) do
+    identity
+    |> delete_changeset()
+    |> CoherenceAssent.repo.delete()
+  end
+  defp delete_identity(nil),
+    do: {:ok, nil}
+
+  defp delete_changeset(%UserIdentity{} = identity) do
+    user = identity |> get_user_from_identity
+
+    identity
+    |> cast(%{}, [])
+    |> validate_user_has_password_or_other_identity(user)
+  end
+
+  defp validate_user_has_password_or_other_identity(changeset, %{password_hash: nil} = user) do
+    query = from i in UserIdentity, where: i.user_id == ^user.id, select: i.id
+
+    count = query
+    |> CoherenceAssent.repo.all()
+    |> Enum.count
+
+    case count > 1 do
+      true -> changeset
+      _    -> add_error(changeset, :user, "needs password")
+    end
+  end
+  defp validate_user_has_password_or_other_identity(changeset, _user),
+    do: changeset
 end

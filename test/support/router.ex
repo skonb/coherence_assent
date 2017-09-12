@@ -1,4 +1,4 @@
-defmodule CoherenceAssent.Test.Router do
+defmodule CoherenceAssent.Test.Web.Router do
   use Phoenix.Router
   use Coherence.Router
   use CoherenceAssent.Router

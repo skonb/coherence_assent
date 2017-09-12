@@ -44,7 +44,7 @@ defmodule Mix.Tasks.CoherenceAssent.InstallTest do
     in_tmp "updates_coherence", fn ->
       File.mkdir_p!("lib/coherence_assent_web")
       Mix.Task.reenable "coh.install"
-      Mix.Task.run "coh.install", ~w(--full --confirmable --invitable --no-config --repo=CoherenceAssent.Test.Repo --no-migrations)
+      Mix.Task.run "coh.install", ~w(--full --confirmable --invitable --no-config --repo=CoherenceAssent.Test.Repo --no-migrations --web-module=CoherenceAssent.Test.Web)
 
       ~w(--no-boilerplate)
       |> Mix.Tasks.CoherenceAssent.Install.run
@@ -64,6 +64,18 @@ defmodule Mix.Tasks.CoherenceAssent.InstallTest do
         assert file =~ "def oauth_links"
         assert file =~ "def oauth_link"
       end
+      assert {{:module, _, _, _}, _} = Code.eval_file file_path
+
+      file_path = "lib/coherence_assent_web/coherence_messages.ex"
+      assert_file file_path, fn file ->
+        assert file =~ "def could_not_sign_in"
+        assert file =~ "def identity_cannot_be_removed_missing_user_password"
+        assert file =~ "def account_already_bound_to_other_user"
+        assert file =~ "def login_with_provider"
+        assert file =~ "def remove_provider_authentication"
+        assert file =~ "def authentication_has_been_removed"
+      end
+      assert {{:module, _, _, _}, _} = Code.eval_file file_path
 
       file_path = "lib/coherence_assent_web/templates/coherence/registration/new.html.eex"
       assert_file file_path, fn file ->
@@ -73,6 +85,11 @@ defmodule Mix.Tasks.CoherenceAssent.InstallTest do
       file_path = "lib/coherence_assent_web/templates/coherence/session/new.html.eex"
       assert_file file_path, fn file ->
         assert file =~ "<%= oauth_links(@conn) %>"
+      end
+
+      file_path = "lib/coherence_assent_web/templates/coherence/registration/edit.html.eex"
+      assert_file file_path, fn file ->
+        assert file =~ "<%= oauth_links(@conn, @current_user) %>"
       end
     end
   end

@@ -1,4 +1,4 @@
-defmodule CoherenceAssent.Test.Endpoint do
+defmodule CoherenceAssent.Test.Web.Endpoint do
   use Phoenix.Endpoint, otp_app: :coherence_assent
 
   plug Plug.RequestId
@@ -17,5 +17,5 @@ defmodule CoherenceAssent.Test.Endpoint do
     key: "_binaryid_key",
     signing_salt: "JFbk5iZ6"
 
-  plug CoherenceAssent.Test.Router
+  plug CoherenceAssent.Test.Web.Router
 end

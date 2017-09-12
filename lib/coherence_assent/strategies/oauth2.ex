@@ -1,4 +1,7 @@
-defmodule CoherenceAssent.Strategies.Oauth2 do
+defmodule CoherenceAssent.Strategies.OAuth2 do
+  @moduledoc """
+  OAuth 2.0 strategy.
+  """
 
   @doc false
   def authorize_url(conn: conn, config: config) do
@@ -57,7 +60,7 @@ defmodule CoherenceAssent.Strategies.Oauth2 do
   end
   def get_access_token({:error, _error} = error, _params), do: error
 
-  defp process_access_token_response({:ok, %{token: %{other_params: %{"error" => error, "error_description" => error_description }}}}, conn),
+  defp process_access_token_response({:ok, %{token: %{other_params: %{"error" => error, "error_description" => error_description}}}}, conn),
     do: {:error, %{conn: conn, error: %CoherenceAssent.RequestError{message: error_description, error: error}}}
   defp process_access_token_response({:ok, client}, conn),
     do: {:ok, %{conn: conn, client: client}}

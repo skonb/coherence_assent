@@ -18,8 +18,8 @@ defmodule CoherenceAssent.Strategies.OAuth do
   end
 
   defp get_request_token({:ok, %{conn: conn}}, config, params) do
-    creds = OAuther.credentials(consumer_key: config[:consumer_key] || "",
-                                consumer_secret: config[:consumer_secret] || "")
+    creds = OAuther.credentials(consumer_key: config[:consumer_key],
+                                consumer_secret: config[:consumer_secret])
     request_token_url = process_url(config, config[:request_token_url] || "/oauth/request_token")
 
     [site: config[:site],
@@ -41,8 +41,8 @@ defmodule CoherenceAssent.Strategies.OAuth do
   defp build_authorize_url({:error, error}, _config), do: {:error, error}
 
   def get_access_token({:ok, %{conn: conn}}, config, oauth_token, oauth_verifier) do
-    creds = OAuther.credentials(consumer_key: config[:consumer_key] || "",
-                                consumer_secret: config[:consumer_secret] || "",
+    creds = OAuther.credentials(consumer_key: config[:consumer_key],
+                                consumer_secret: config[:consumer_secret],
                                 token: oauth_token)
     access_token_url = process_url(config, config[:access_token_url] || "/oauth/access_token")
     [site: config[:site],
@@ -75,10 +75,10 @@ defmodule CoherenceAssent.Strategies.OAuth do
     do: {:error, %{conn: conn, error: error}}
 
   def get_user({:ok, %{conn: conn, token: token}}, config) do
-    creds = OAuther.credentials(consumer_key: config[:consumer_key] || "",
-                                consumer_secret: config[:consumer_secret] || "",
-                                token: token["oauth_token"] || "",
-                                token_secret: token["oauth_token_secret"] || "")
+    creds = OAuther.credentials(consumer_key: config[:consumer_key],
+                                consumer_secret: config[:consumer_secret],
+                                token: token["oauth_token"],
+                                token_secret: token["oauth_token_secret"])
 
     [site: config[:site],
      url: process_url(config, config[:user_url]),

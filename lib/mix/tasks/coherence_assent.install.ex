@@ -43,8 +43,8 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
   @boolean_options   @default_booleans ++ ~w(default) ++ @all_options
 
   @switches [
-    module: :string, installed_options: :boolean,
-    migration_path: :string, web_path: :string, silent: :boolean
+    module: :string, migration_path: :string, web_path: :string,
+    silent: :boolean
   ] ++ Enum.map(@boolean_options, &({String.to_atom(&1), :boolean}))
 
   @switch_names Enum.map(@switches, &(elem(&1, 0)))
@@ -61,9 +61,6 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
     |> do_config(bin_opts)
     |> do_run
   end
-
-  defp do_run(%{installed_options: true} = config),
-    do: print_installed_options config
 
   defp do_run(config) do
     config
@@ -116,48 +113,42 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
 
   defp update_user_model_file(user_path) do
     user_path
-    |> File.read!()
-    |> add_after_in_content("use Coherence.Schema", "use CoherenceAssent.Schema")
-    |> add_after_in_content("coherence_schema()", "coherence_assent_schema()")
-    |> replace_in_content("|> validate_coherence(params)", "|> validate_coherence_assent(params)")
+    |> File.read()
+    |> update_user_model_content(fn content -> add_after_in_content(content, "use Coherence.Schema", "use CoherenceAssent.Schema") end)
+    |> update_user_model_content(fn content -> add_after_in_content(content, "coherence_schema()", "coherence_assent_schema()") end)
+    |> update_user_model_content(fn content -> replace_in_content(content, "|> validate_coherence(params)", "|> validate_coherence_assent(params)") end)
     |> update_file(user_path)
   end
 
+  defp update_user_model_content({:ok, content}, func) do
+    func.(content)
+  end
+  defp update_user_model_content({:error, error}, _func),
+    do: {:error, error}
+
   defp update_coherence_view_helpers(%{web_path: web_path} = config) do
-    path = Path.join(web_path, "views/coherence/coherence_view_helpers.ex")
-    string = "use Phoenix.HTML"
+    path = web_path |> Path.join("views/coherence/coherence_view_helpers.ex")
+    needle = "@helpers WEBAPP.Router.Helpers"
+    needle_regex = ~r/^((\s*)#{Regex.escape("@helpers ")}[\.\w]*#{Regex.escape(".Router.Helpers")})$/m
+    string = "use CoherenceAssent.ViewHelpers, helpers: WebdropWeb.Router.Helpers"
 
     path
     |> File.lstat()
-    |> update_coherence_view_helpers_file(config, path, string)
+    |> update_coherence_view_helpers_file(path, needle_regex, needle, string)
+    |> add_to_file_instructions(config, path, string)
   end
 
-  defp update_coherence_view_helpers_file({:ok, %{type: :regular}}, config, helpers_path, string) do
+  defp update_coherence_view_helpers_file({:ok, %{type: :regular}}, helpers_path, needle_regex, needle, string) do
     helpers_path
     |> File.read!()
-    |> add_after_in_content(string, "use CoherenceAssent.ViewHelpers")
+    |> add_after_in_content(needle_regex, needle, string)
     |> update_file(helpers_path)
-
-    config
   end
-  defp update_coherence_view_helpers_file(_stat, config, helpers_path, string) do
-    config
-    |> Map.merge(%{
-      instructions:
-    """
-    #{config.instructions}
-
-    Could not find #{helpers_path}.
-
-    Add the following to your view helpers:
-
-    #{string}
-    """
-    })
-  end
+  defp update_coherence_view_helpers_file({:error, error}, _helpers_path, _needle_regex, _needle, _string),
+    do: {:error, error}
 
   defp update_coherence_messages(%{web_path: web_path} = config) do
-    path = Path.join(web_path, "coherence_messages.ex")
+    path = web_path |> Path.join("coherence_messages.ex")
     string = """
 
                @behavior CoherenceAssent.Messages
@@ -169,83 +160,84 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
                def remove_provider_authentication(opts), do: dgettext("coherence_assent", "Remove %{provider} authentication", opts)
                def authentication_has_been_removed(opts), do: dgettext("coherence_assent", "Authentication with %{provider} has been removed", opts)
              """
-
+    regex = ~r/#{Regex.escape("def could_not_sign_in")}/
 
     path
     |> File.lstat()
-    |> update_coherence_messages_file(config, path, string)
+    |> update_coherence_messages_file(path, regex, string)
+    |> add_to_file_instructions(config, path, string)
   end
 
-  defp update_coherence_messages_file({:ok, %{type: :regular}}, config, messages_path, string) do
+  defp update_coherence_messages_file({:ok, %{type: :regular}}, messages_path, regex, string) do
     messages_path
     |> File.read!()
-    |> add_to_end_in_module(string, ~r/#{Regex.escape("def could_not_sign_in")}/)
+    |> add_to_end_in_module(string, regex)
     |> update_file(messages_path)
-
-    config
   end
-  defp update_coherence_messages_file(_stat, config, messages_path, string) do
-    config
-    |> Map.merge(%{
-      instructions:
-    """
-    #{config.instructions}
-
-    Could not find #{messages_path}.
-
-    Add the following to your messages:
-
-    #{string}
-    """
-    })
-  end
+  defp update_coherence_messages_file({:error, error}, _messages_path, _regex, _string),
+    do: {:error, error}
 
   defp update_coherence_templates(%{web_path: web_path} = config) do
-    config
+    %{config: config, failed: []}
     |> update_coherence_template(web_path, "templates/coherence/session/new.html.eex", "<%= oauth_links(@conn) %>")
     |> update_coherence_template(web_path, "templates/coherence/registration/new.html.eex", "<%= oauth_links(@conn) %>")
     |> update_coherence_template(web_path, "templates/coherence/registration/edit.html.eex", "<%= oauth_links(@conn, @current_user) %>")
+    |> update_coherence_templates_instructions()
   end
 
-  defp update_coherence_template(config, web_path, path, string) do
+  defp update_coherence_template(%{failed: failed} = params, web_path, path, string) do
     path = Path.join(web_path, path)
 
-    path
+    failed = path
     |> File.lstat()
-    |> add_to_coherence_template_file(config, path, string)
+    |> add_to_coherence_template_file(path, string)
+    |>  case do
+         {:error, error} -> failed ++ [path: path, string: string, error: error]
+         {:ok, _file}    -> failed
+       end
+
+    Map.merge(params, %{failed: failed})
   end
 
-  defp add_to_coherence_template_file({:ok, %{type: :regular}}, config, path, string) do
+  defp add_to_coherence_template_file({:ok, %{type: :regular}}, path, string) do
     content = File.read!(path)
 
     content
     |> String.contains?(string)
     |> case do
-         true -> content
-         _    -> content <> "\n" <> string
+         true -> {:ok, content}
+         _    -> {:ok, content <> "\n" <> string}
        end
     |> update_file(path)
-
-    config
   end
-  defp add_to_coherence_template_file(_stat, config, path, string) do
+  defp add_to_coherence_template_file({:error, error}, _path, _string),
+    do: {:error, error}
+
+  defp update_coherence_templates_instructions(%{config: config, failed: [_ | _] = failed}) do
+    messages = failed
+             |> Enum.reduce([], fn failed, strings ->
+                  strings ++ ["WARNING: Could not update \"#{failed[:path]}\". Please add \"#{failed[:string]}\" to the template file."]
+                end)
+
     config
     |> Map.merge(%{
       instructions:
     """
     #{config.instructions}
 
-    Could not find "#{path}". Add "#{string}" to the login and
-    registration template files.
+    #{Enum.join(messages, "\n")}
     """
     })
   end
+  defp update_coherence_templates_instructions(%{config: config}), do: config
 
-  defp add_after_in_content(content, needle, replacement) do
-    regex = ~r/^((\s*)#{Regex.escape(needle)})$/m
+  defp add_after_in_content(content, needle, replacement) when is_binary(needle) do
+    add_after_in_content(content, ~r/^((\s*)#{Regex.escape(needle)})$/m, needle, replacement)
+  end
+  defp add_after_in_content(content, needle_regex, needle, replacement) do
     regex_replacement = "\\1\n\\2#{replacement}"
 
-    replace(content, regex, regex_replacement, needle, replacement)
+    replace(content, needle_regex, regex_replacement, needle, replacement)
   end
 
   defp replace_in_content(content, needle, replacement) do
@@ -258,28 +250,32 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
     regex = ~r/^defmodule(.*)end$/s
     regex_replacement = "defmodule\\1#{insert}end"
     case Regex.match?(regex_needle, string) do
-      true  -> string
-      false -> Regex.replace(regex, string, regex_replacement, global: false)
+      true  -> {:ok, string}
+      false -> {:ok, Regex.replace(regex, string, regex_replacement, global: false)}
     end
   end
 
   defp replace(string, regex, regex_replacement, needle, replacement) do
-    found_needle = Regex.match?(~r/#{Regex.escape(needle)}/, string)
+    found_needle = Regex.match?(regex, string)
     found_replacement = Regex.match?(~r/#{Regex.escape(replacement)}/, string)
 
     case {found_needle, found_replacement} do
-      {true, false}  -> Regex.replace(regex, string, regex_replacement, global: false)
-      {false, true}  -> string
-      {false, false} -> Mix.raise "Can't find #{needle} and add #{replacement} in user schema file"
-      {true, true}   -> string
+      {true, false}  -> {:ok, Regex.replace(regex, string, regex_replacement, global: false)}
+      {false, true}  -> {:ok, string}
+      {false, false} -> {:error, "Can't find \"#{needle}\" and replace with \"#{replacement}\""}
+      {true, true}   -> {:ok, string}
     end
   end
 
-  defp update_file(content, path) do
-    {:ok, file} = File.open path, [:write]
-    IO.binwrite file, content
-    File.close file
+  defp update_file({:ok, content}, path) do
+    path
+    |> File.write(content)
+    |> case do
+         :ok   -> {:ok, path}
+         error -> error
+       end
   end
+  defp update_file({:error, error}, _path), do: {:error, error}
 
   ################
   # Templates
@@ -487,7 +483,6 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
     |> Map.put(:opts, bin_opts)
     |> Map.put(:binding, binding)
     |> Map.put(:module, opts[:module])
-    |> Map.put(:installed_options, opts[:installed_options])
     |> Map.put(:repo, repo)
     |> Map.put(:migration_path, opts[:migration_path])
     |> Map.put(:silent, opts[:silent])
@@ -519,14 +514,6 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
     end
   end
 
-  defp print_installed_options(config) do
-    ["mix coherence_assent.install"]
-    |> list_config_options(Application.get_env(:coherence_assent, :opts, []))
-    |> Enum.reverse
-    |> Enum.join(" ")
-    |> shell_info(config)
-  end
-
   defp shell_info(_message, %{silent: true} = config), do: config
   defp shell_info(message, config) do
     Mix.shell.info message
@@ -548,4 +535,21 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
   defp lib_path(path) do
     Path.join ["lib", to_string(Mix.Phoenix.otp_app()), path]
   end
+
+  defp add_to_file_instructions({:error, _}, config, path, string) do
+    config
+    |> Map.merge(%{
+      instructions:
+    """
+    #{config.instructions}
+
+    WARNING: Could not update #{path}. Please add the following to the file:
+
+    #{string}
+
+    """
+    })
+  end
+  defp add_to_file_instructions({:ok, _}, config, _path, _string),
+    do: config
 end

@@ -1,7 +1,7 @@
 defmodule CoherenceAssent.ViewHelpers do
   @moduledoc false
 
-  defmacro __using__(_opts) do
+  defmacro __using__(opts \\ []) do
     quote do
       @spec oauth_links(conn):: String.t
       def oauth_links(conn), do: oauth_links(conn, nil)
@@ -28,13 +28,13 @@ defmodule CoherenceAssent.ViewHelpers do
       defp oauth_signin_link(conn, provider) do
        %{provider: humanize(provider)}
        |> Coherence.Messages.backend().login_with_provider()
-       |> link(to: @helpers.coherence_assent_auth_path(conn, :index, provider))
+       |> link(to: unquote(opts)[:helpers].coherence_assent_auth_path(conn, :index, provider))
       end
 
       defp oauth_remove_link(conn, provider) do
        %{provider: humanize(provider)}
        |> Coherence.Messages.backend().remove_provider_authentication()
-       |> link(to: @helpers.coherence_assent_auth_path(conn, :delete, provider), method: :delete, data: [confirm: "Are you sure?"])
+       |> link(to: unquote(opts)[:helpers].coherence_assent_auth_path(conn, :delete, provider), method: :delete, data: [confirm: "Are you sure?"])
       end
     end
   end

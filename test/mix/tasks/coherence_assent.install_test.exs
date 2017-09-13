@@ -67,7 +67,7 @@ defmodule Mix.Tasks.CoherenceAssent.InstallTest do
 
       file_path = "lib/coherence_assent_web/coherence_messages.ex"
       assert_file file_path, fn file ->
-        assert file =~ "@behavior CoherenceAssent.Messages"
+        assert file =~ "@behaviour CoherenceAssent.Messages"
         assert file =~ "def could_not_sign_in"
         assert file =~ "def identity_cannot_be_removed_missing_user_password"
         assert file =~ "def account_already_bound_to_other_user"

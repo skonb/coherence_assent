@@ -10,24 +10,24 @@ defmodule CoherenceAssent.AuthController do
 
   def index(conn, %{"provider" => provider}) do
     config = provider
-             |> Controller.get_config!()
+             |> get_config!()
              |> Keyword.put(:redirect_uri, redirect_uri(conn, provider))
 
-    {:ok, %{conn: conn, url: url}} = Controller.call_strategy!(config,
-                                                               :authorize_url,
-                                                               [[conn: conn,
-                                                                 config: config]])
+    {:ok, %{conn: conn, url: url}} = call_strategy!(config,
+                                                    :authorize_url,
+                                                    [[conn: conn,
+                                                      config: config]])
 
     redirect(conn, external: url)
   end
 
   def callback(conn, %{"provider" => provider} = params) do
-    config = Controller.get_config!(provider)
+    config = get_config!(provider)
     params = %{"redirect_uri" => redirect_uri(conn, provider)}
              |> Map.merge(params)
 
     config
-    |> Controller.call_strategy!(:callback, [[conn: conn, config: config, params: params]])
+    |> call_strategy!(:callback, [[conn: conn, config: config, params: params]])
     |> callback_handler(provider, params)
   end
 
@@ -37,11 +37,11 @@ defmodule CoherenceAssent.AuthController do
     |> CoherenceAssent.UserIdentities.delete_identity_from_user(provider)
     |> case do
          {:ok, _} ->
-           msg = Coherence.Messages.backend().authentication_has_been_removed(%{provider: humanize(provider)})
+           msg = CoherenceAssent.Messages.backend().authentication_has_been_removed(%{provider: humanize(provider)})
            put_flash(conn, :info, msg)
 
          {:error, %{errors: [user: {"needs password", []}]}} ->
-           msg = Coherence.Messages.backend().identity_cannot_be_removed_missing_user_password()
+           msg = CoherenceAssent.Messages.backend().identity_cannot_be_removed_missing_user_password()
            put_flash(conn, :error, msg)
        end
     |> redirect(to: Controller.get_route(conn, :registration_path, :edit))
@@ -59,4 +59,23 @@ defmodule CoherenceAssent.AuthController do
   end
   defp callback_handler({:error, %{error: error}}, _provider, _params),
     do: raise error
+
+  def get_config!(provider) do
+    config = provider |> CoherenceAssent.config()
+
+    config
+    |> case do
+         nil  -> nil
+         list -> Enum.into(list, %{})
+       end
+    |> case do
+         %{strategy: _} -> config
+         %{}            -> raise "No :strategy set for :#{provider} configuration!"
+         nil            -> raise "No provider configuration available for #{provider}."
+       end
+  end
+
+  defp call_strategy!(config, method, arguments) do
+    apply(config[:strategy], method, arguments)
+  end
 end

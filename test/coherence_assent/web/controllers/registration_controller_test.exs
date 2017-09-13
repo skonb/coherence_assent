@@ -21,7 +21,7 @@ defmodule CoherenceAssent.RegistrationControllerTest do
   test "create/2 with valid", %{conn: conn} do
     conn = post conn, coherence_assent_registration_path(conn, :create, @provider), %{registration: %{email: "foo@example.com"}}
 
-    assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
+    assert redirected_to(conn) == "/registration_created"
     assert [new_user] = CoherenceAssent.repo.all(CoherenceAssent.Test.User)
     assert new_user.email == "foo@example.com"
     refute CoherenceAssent.Test.User.confirmed?(new_user)

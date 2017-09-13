@@ -151,7 +151,7 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
     path = web_path |> Path.join("coherence_messages.ex")
     string = """
 
-               @behavior CoherenceAssent.Messages
+               @behaviour CoherenceAssent.Messages
 
                def could_not_sign_in, do: dgettext("coherence_assent", "Could not sign in. Please try again.")
                def identity_cannot_be_removed_missing_user_password, do: dgettext("coherence_assent", "Authentication cannot be removed until you've entered a password for your account.")
@@ -518,18 +518,6 @@ defmodule Mix.Tasks.CoherenceAssent.Install do
   defp shell_info(message, config) do
     Mix.shell.info message
     config
-  end
-
-  defp list_config_options(acc, opts) do
-    opts
-    |> Enum.reduce(acc, &config_option/2)
-  end
-
-  defp config_option(opt, acc) do
-    str = opt
-    |> Atom.to_string
-    |> String.replace("_", "-")
-    ["--" <> str | acc]
   end
 
   defp lib_path(path) do

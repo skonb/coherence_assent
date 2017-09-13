@@ -5,39 +5,20 @@ defmodule CoherenceAssent.Controller do
   import Plug.Conn, only: [put_session: 3]
   import Phoenix.Naming, only: [humanize: 1]
 
-  def get_config!(provider) do
-    config = provider |> CoherenceAssent.config()
-
-    config
-    |> case do
-         nil  -> nil
-         list -> Enum.into(list, %{})
-       end
-    |> case do
-         %{strategy: _} -> config
-         %{}            -> raise "No :strategy set for :#{provider} configuration!"
-         nil            -> raise "No provider configuration available for #{provider}."
-       end
-  end
-
-  def call_strategy!(config, method, arguments) do
-    apply(config[:strategy], method, arguments)
-  end
-
-  def callback_response({:ok, :user_created, user}, conn, _provider, _user_params, _params) do
+  def callback_response({:ok, :user_created, user}, conn, _provider, _user_params, params) do
     conn
     |> send_confirmation(user)
     |> Coherence.ControllerHelpers.login_user(user)
-    |> redirect_to(:registration_create, %{})
+    |> redirect_to(:registration_create, params)
   end
-  def callback_response({:ok, _type, user}, conn, _provider, _user_params, _params) do
+  def callback_response({:ok, _type, user}, conn, _provider, _user_params, params) do
     conn
     |> Coherence.ControllerHelpers.login_user(user)
-    |> redirect_to(:session_create, %{})
+    |> redirect_to(:session_create, params)
   end
   def callback_response({:error, :bound_to_different_user}, conn, provider, _user_params, _params) do
     conn
-    |> put_flash(:error, Coherence.Messages.backend().account_already_bound_to_other_user(%{provider: humanize(provider)}))
+    |> put_flash(:error, CoherenceAssent.Messages.backend().account_already_bound_to_other_user(%{provider: humanize(provider)}))
     |> redirect(to: get_route(conn, :registration_path, :new))
   end
   def callback_response({:error, :missing_login_field}, conn, provider, user_params, _params) do
@@ -55,8 +36,8 @@ defmodule CoherenceAssent.Controller do
         |> CoherenceAssent.RegistrationController.add_login_field(params, changeset)
       %{errors: _errors} ->
         conn
-        |> put_flash(:error, Coherence.Messages.backend().could_not_sign_in())
-        |> redirect(to: get_route(conn, :registration_path, :new))
+        |> put_flash(:error, CoherenceAssent.Messages.backend().could_not_sign_in())
+        |> redirect(to: Coherence.Config.logged_out_url(conn))
     end
   end
 

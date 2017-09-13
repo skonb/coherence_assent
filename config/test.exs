@@ -7,7 +7,7 @@ config :coherence,
   web_module: CoherenceAssent,
   router: CoherenceAssent.Test.Web.Router,
   messages_backend: CoherenceAssent.Test.Coherence.Messages,
-  logged_out_url: "/",
+  logged_out_url: "/logged_out",
   email_from_name: "Your Name",
   email_from_email: "yourname@example.com",
   opts: [:authenticatable, :recoverable, :lockable, :trackable, :unlockable_with_token, :confirmable, :registerable]

@@ -49,8 +49,8 @@ defmodule CoherenceAssent.RegistrationController do
     case get_session(conn, :coherence_assent_params) do
       nil ->
         conn = conn
-        |> put_flash(:error, Coherence.Messages.backend().invalid_request())
-        |> Controller.get_route(:registration_path, :new)
+        |> put_flash(:error, CoherenceAssent.Messages.backend().invalid_request())
+        |> redirect(to: Coherence.Config.logged_out_url(conn))
 
         {:error, conn}
 

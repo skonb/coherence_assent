@@ -37,7 +37,7 @@ defmodule CoherenceAssent.AuthControllerTest do
       |> assign(Coherence.Config.assigns_key, user)
       |> get(coherence_assent_auth_path(conn, :callback, @provider, @callback_params))
 
-      assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
+      assert redirected_to(conn) == "/session_created"
       assert length(get_user_identities()) == 1
     end
 
@@ -49,7 +49,7 @@ defmodule CoherenceAssent.AuthControllerTest do
       |> assign(Coherence.Config.assigns_key, user)
       |> get(coherence_assent_auth_path(conn, :callback, @provider, @callback_params))
 
-      assert redirected_to(conn) == "/registrations/new"
+      assert redirected_to(conn) == Coherence.ControllerHelpers.router_helpers().registration_path(conn, :new)
       assert get_flash(conn, :error) == "The %{provider} account is already bound to another user."
     end
 
@@ -58,7 +58,7 @@ defmodule CoherenceAssent.AuthControllerTest do
 
       conn = get conn, coherence_assent_auth_path(conn, :callback, @provider, @callback_params)
 
-      assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
+      assert redirected_to(conn) == "/registration_created"
       assert [user_identity] = get_user_identities()
 
       new_user = CoherenceAssent.repo.preload(user_identity, :user).user
@@ -93,7 +93,7 @@ defmodule CoherenceAssent.AuthControllerTest do
 
       conn = get conn, coherence_assent_auth_path(conn, :callback, @provider, @callback_params)
 
-      assert redirected_to(conn) == Coherence.ControllerHelpers.logged_in_url(conn)
+      assert redirected_to(conn) == "/session_created"
     end
 
     test "with failed token generation", %{conn: conn, server: server} do

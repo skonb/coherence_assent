@@ -78,10 +78,10 @@ defmodule CoherenceAssent.Strategies.OAuth2 do
 
   defp process_user_response({:ok, %OAuth2.Response{body: user}}, conn, client),
     do: {:ok, %{conn: conn, client: client, user: user}}
-  defp process_user_response({:error, %OAuth2.Response{status_code: 401, body: body}}, _conn) do
+  defp process_user_response({:error, %OAuth2.Response{status_code: 401, body: body}}, _conn, _client) do
     raise "Unauthorized token"
   end
-  defp process_user_response({:error, %OAuth2.Error{reason: reason}}, _conn) do
+  defp process_user_response({:error, %OAuth2.Error{reason: reason}}, _conn, _client) do
     raise "Error: #{inspect reason}"
   end
 

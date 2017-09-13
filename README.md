@@ -6,12 +6,12 @@ Use Google, Github, Twitter, Facebook, or add your own strategy for authorizatio
 
 ## Features
 
-* Collects required login field if missing from provider
-  * Or if not verified in case of email
+* Collects required login field if missing verified email from provider
 * Multiple providers can be used for accounts
+  * When removing auth: Validates user has password or another provider authentication
 * Github, Google, Twitter and Facebook strategies included
 * Updates Coherence templates automatically
-* Plug in custom strategies
+* You can add your custom strategy with ease
 
 ## Installation
 
@@ -29,7 +29,7 @@ end
 
 Run `mix deps.get` to install it.
 
-Run to install coherence_assent:
+Run to update all coherence files:
 
 ```bash
 mix coherence_assent.install
@@ -45,7 +45,7 @@ WEB_PATH/views/coherence/coherence_view_helpers.ex
 WEB_PATH/coherence_messages.ex
 ```
 
-If the files cannot be found, install instructions will be printed instead. It's important that you update all files according to these instructions.
+If the files cannot be updated, install instructions will be printed instead. It's important that you update all files according to these instructions.
 
 Set up routes:
 
@@ -89,7 +89,7 @@ config :coherence_assent, :providers,
       ]
 ```
 
-Strategy for Twitter, Facebook, Google and Github are included. You can also add your own. You can add your own strategy:
+Strategy for Twitter, Facebook, Google and Github are included. You can also add your own. You can add your own strategy. This is an example of an OAuth 2.0 implementation:
 
 ```elixir
 defmodule TestProvider do

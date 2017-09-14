@@ -18,6 +18,24 @@ defmodule CoherenceAssent.RegistrationControllerTest do
     assert html_response(conn, 200)
   end
 
+  test "add_login_field/2 with missing session", %{conn: conn} do
+    conn = conn
+    |> Plug.Conn.delete_session(:coherence_assent_params)
+    |> get(coherence_assent_registration_path(conn, :add_login_field, @provider))
+
+    assert redirected_to(conn) == Coherence.Config.logged_out_url()
+    assert get_flash(conn, :error) == "Invalid Request."
+  end
+
+  test "create/2 with missing session", %{conn: conn} do
+    conn = conn
+    |> Plug.Conn.delete_session(:coherence_assent_params)
+    |> post(coherence_assent_registration_path(conn, :create, @provider), %{registration: %{email: "foo@example.com"}})
+
+    assert redirected_to(conn) == Coherence.Config.logged_out_url()
+    assert get_flash(conn, :error) == "Invalid Request."
+  end
+
   test "create/2 with valid", %{conn: conn} do
     conn = post conn, coherence_assent_registration_path(conn, :create, @provider), %{registration: %{email: "foo@example.com"}}
 

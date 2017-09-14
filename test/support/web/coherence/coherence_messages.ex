@@ -5,6 +5,7 @@ defmodule CoherenceAssent.Test.Coherence.Messages do
 
   def cant_be_blank, do: dgettext(@domain, "can't be blank")
   def mailer_required, do: dgettext(@domain, "Mailer configuration required!")
+  def invalid_request, do: dgettext(@domain, "Invalid Request.")
 
   def could_not_sign_in, do: dgettext("coherence_assent", "Could not sign in. Please try again.")
   def identity_cannot_be_removed_missing_user_password, do: dgettext("coherence_assent", "Authentication cannot be removed until you've entered a password for your account.")
